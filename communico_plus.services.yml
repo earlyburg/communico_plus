@@ -1,0 +1,4 @@
+services:
+  communico_plus.connector:
+    class: Drupal\communico_plus\Service\ConnectorService
+    arguments: []

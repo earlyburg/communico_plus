@@ -1,0 +1,170 @@
+<?php
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * @param array $suggestions
+ * @param array $variables
+ * @param $hook
+ * Implements hook_theme_suggestions_alter().
+ */
+function communico_plus_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+  if ($hook == 'form' & !empty($variables['element']['#theme'])) {
+    $suggestions[] = 'form__' . $variables['element']['#theme'][0];
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for form templates.
+ * Show suggestions for custom block types.
+ * @param array $suggestions
+ * @param array $variables
+ */
+function communico_plus_theme_suggestions_block_alter(array &$suggestions, array $variables) {
+  $content = $variables['elements']['content'];
+  if (isset($content['#block_content']) && $content['#block_content'] instanceof \Drupal\block_content\BlockContentInterface) {
+    $suggestions[] = 'block__' . $content['#block_content']->bundle();
+  }
+}
+
+/**
+ * @param $form
+ * @param FormStateInterface $form_state
+ * @param $form_id
+ * Implements hook_form_alter()
+ */
+function communico_plus_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id == 'communico_plus_filter_form') {
+    $form['#attached']['library'][] = 'communico_plus/communico_plus.library';
+  }
+}
+
+/**
+ * Implements hook_theme().
+ *
+ */
+function communico_plus_theme($existing, $type, $theme, $path) {
+  $variables = array(
+    'communico_plus_block' => array(
+      'variables' => array(
+        'events' => NULL,
+      ),
+      'template' => 'communico_plus_block',
+    ),
+    'communico_plus_item' => array(
+      'variables' => array(
+        'title_link' => NULL,
+        'start_date' => NULL,
+        'end_date' => NULL,
+        'location' => NULL,
+        'room' => NULL,
+      ),
+      'template' => 'communico_plus_item',
+    ),
+    'communico_plus_filter_block' => array(
+      'variables' => array(
+        'events' => NULL,
+      ),
+      'template' => 'communico_plus_filter_block',
+    ),
+    'communico_plus_filter_item' => array(
+      'variables' => array(
+        'filter_form' => NULL,
+        'details' => NULL,
+      ),
+      'template' => 'communico_plus_filter_item',
+    ),
+    'communico_plus_filter_form' => [
+      'render element' => 'children',
+      'template' => 'form__communico_plus_filter_form',
+    ],
+  );
+  return $variables;
+}
+
+/**
+ * @param null $id
+ * @return mixed
+ *
+ */
+function communicoPlusGetEventTypeString($id = NULL) {
+  $db = Drupal::service('database');
+  $return = $db->select('communico_types', 'n')
+    ->fields('n', ['descr'])
+    ->condition('n.number', $id, '=')
+    ->execute()
+    ->fetchField();
+  return $return;
+}
+
+/**
+ * @param null $id
+ * @return mixed
+ *
+ */
+function communicoPlusGetLibraryLocationString($id = NULL) {
+  $db = Drupal::service('database');
+  $return = $db->select('communico_locations', 'n')
+    ->fields('n', ['location_name'])
+    ->condition('n.location_id', $id, '=')
+    ->execute()
+    ->fetchField();
+  return $return;
+}
+
+/**
+ * @return array
+ *
+ */
+function communicoPlusGetTypesArray() {
+  $dropdownArray = [];
+  $connector = Drupal::service('communico_plus.connector');
+  $return = $connector->getEventTypes();
+  foreach($return['data']['entries'] as $index => $name) {
+    $dropdownArray[$index] = $name['name'];
+  }
+  return $dropdownArray;
+}
+
+/**
+ * @return array
+ *
+ */
+function communicoPlusGetLocationArray() {
+  $dropdownArray = [];
+  $connector = Drupal::service('communico_plus.connector');
+  $return = $connector->getLibraryLocations();
+  foreach($return['data']['entries'] as $name) {
+    $dropdownArray[$name['id']] = $name['name'];
+  }
+  return $dropdownArray;
+}
+
+/**
+ * @throws Exception
+ * Inserts data into database tables for dropdowns
+ */
+function communicoPlusBuildDropdownTables() {
+  $connection = Drupal::database();
+  $connection->truncate('communico_types')->execute();
+  $connection->truncate('communico_locations')->execute();
+  $typesArray = communicoPlusGetTypesArray();
+  foreach ($typesArray as $index => $value) {
+    $entry = [
+      'number' => $index,
+      'descr' => $value,
+    ];
+    $connection->insert('communico_types')->fields($entry)->execute();
+  }
+  $locationArray = communicoPlusGetLocationArray();
+  foreach ($locationArray as $index => $value) {
+    $entry = [
+      'location_id' => $index,
+      'location_name' => $value,
+    ];
+    $connection->insert('communico_locations')->fields($entry)->execute();
+  }
+
+
+
+}
+

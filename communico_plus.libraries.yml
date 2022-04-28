@@ -1,0 +1,5 @@
+communico_plus.library:
+  version: 1.x
+  css:
+    base:
+      css/communico_plus.css: {}

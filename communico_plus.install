@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the communico_plus module.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @see hook_schema()
+ *
+ * @ingroup communico_plus
+ */
+function communico_plus_schema() {
+  $schema['communico_locations'] = [
+    'description' => 'Storage for Communico Plus dropdown form element data.',
+    'fields' => [
+      'location_id' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'Location Id',
+      ],
+      'location_name' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'Location Name',
+      ],
+    ],
+    'unique keys' => [
+    'location_id' => ['location_id'],
+    ],
+  ];
+  $schema['communico_types'] = [
+    'description' => 'Storage for Communico event types dropdown data.',
+    'fields' => [
+      'number' => [
+        'type' => 'varchar',
+        'length' => 4,
+        'not null' => TRUE,
+        'description' => 'Element Number',
+      ],
+      'descr' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'Event Type',
+      ],
+    ],
+    'unique keys' => [
+      'location_id' => ['number'],
+    ],
+  ];
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * @see hook_install()
+ *
+ * @ingroup communico_plus
+ */
+function communico_plus_install() {
+#
+}
+
+
+

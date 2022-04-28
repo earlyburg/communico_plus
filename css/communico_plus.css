@@ -1,0 +1,227 @@
+/*
+ * @file
+ * CSS for communico_plus module.
+ */
+#cp-row-box {
+  display: flex;
+  padding: 0 1%;
+}
+
+#cp-layout-box {
+  display: flex;
+  padding: 0 1%;
+  justify-content: right;
+}
+
+#edit-layout {
+  display: flex;
+}
+
+#cp-communico-filter-form #edit-layout .form-item {
+  width: 125px;
+}
+
+#cp-communico-filter-form .form-item {
+  width: 160px;
+  padding: 0.2em;
+  flex: 1;
+  margin: 0 1%;
+}
+
+#cp-communico-filter-form .form-select {
+  text-align-last: center;
+}
+
+#feed_area_wrapper {
+  display:inline;
+}
+
+#event-block {
+  display: flex;
+  flex-direction: row;
+  /* border:1px solid black; */
+  border-bottom:1px solid black;
+}
+
+.block-section {
+  width: 270px;
+  /* border:1px solid black; */
+}
+
+.block-section-center {
+  width:100%;
+  /* border:1px solid black; */
+}
+
+.form-markup {
+  padding-top: 12px;
+}
+
+#event-block h2 {
+  font-size: 1.8rem;
+}
+
+.section-image {
+  width:125px;
+  height:125px;
+  border:1px solid black;
+  display:flex;
+  float:left;
+}
+.c-feature-paragraph {
+  word-break: break-word;
+  /* border:1px solid black; */
+  display: inline-block;
+}
+
+#event-sub-button {
+  width:90px;
+  height:30px;
+  border:1px solid black;
+}
+
+.block-section,
+.block-section-center,
+.section-image,
+.c-feature {
+  margin: 3px 5px;
+ /* border: 1px solid black; */
+  display: inline-block;
+  word-break: break-word;
+}
+
+#event-sub-button {
+  padding-top: 4px;
+  padding-left: 14px;
+}
+
+.section-time {
+  word-break: break-word;
+  max-width:175px;
+  text-align: right;
+  padding-right: 5px;
+}
+
+.section-button-contain {
+  height:100%;
+  width:100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/**** calendar styles ****/
+
+#cal-head-row,
+#cal-body-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* border: 1px solid black; */
+  width: 100%;
+}
+
+#cal-head-row {
+  border-bottom: 1px solid black;
+  margin-top: 10px;
+}
+
+.day-name {
+  flex: 1;
+  margin-left: 3px;
+
+}
+
+.break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+*[class^='cal-cell-'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border-left: 1px solid black;
+  border-bottom: 1px solid black;
+  min-height: 250px;
+}
+
+.cal-cell-7 {
+  border-right: 1px solid black;
+}
+
+#cal-body-row .cal-data {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cal-data {
+  padding: 3px;
+}
+
+#cp-backward-btn,
+#cp-forward-btn {
+  display: inline-block;
+}
+
+.cal-title,
+.cal-text {
+  font-family: "Helvetica Neue",Helvetica,Roboto,Arial,sans-serif;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #0a0a0a;
+  font-size: 0.8em;
+}
+
+.cal-text {
+  font-weight: 600;
+}
+
+
+/**** media queries ****/
+@media screen and (max-width: 640px) {
+  .block-section {
+    width: 100%;
+  }
+
+  #event-block {
+    display: inline-block;
+  }
+
+  .section-image {
+/*    width: 100%;
+    height: auto; */
+  }
+
+  #cp-row-box {
+    flex-direction: column;
+  }
+
+  #cp-communico-filter-form .form-item {
+    width: 100%;
+    padding:0;
+    margin: 0;
+  }
+
+  #cp-communico-filter-form .form-select {
+    margin: 0;
+  }
+  .form-markup {
+    visibility: hidden;
+    height: 0px;
+  }
+
+  .section-time {
+    margin-top: 6px;
+  }
+
+}
+
+@media screen and (max-width: 300px) {
+  .section-image {
+    width:75px;
+    height:75px;
+  }
+
+
+}
