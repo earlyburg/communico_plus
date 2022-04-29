@@ -201,6 +201,32 @@ class ConnectorService {
 
   /**
    * @return false|mixed
+   * Gets all age groups defined in Communico
+   */
+  public function getAgeGroups() {
+    if ($this->isAuthTokenValid() == FALSE) {
+      $this->getAuthToken();
+    }
+    $token = Drupal::state()->get('communico_plus.authHeader');
+    if ($token == FALSE) {
+      $this->getAuthToken();
+      $token = Drupal::state()->get('communico_plus.authHeader');
+    }
+    $request_headers = [
+      'Content-Type' => 'application/json',
+      'Accept' => 'application/json',
+      'Authorization' => $token,
+    ];
+    $params = [];
+    $url = $this->getCommunicoUrl();
+    $url = $url . '/v3/attend/ages';
+    $data = $this->getFromCommunico($url, $params, $request_headers);
+
+    return $data;
+  }
+
+  /**
+   * @return false|mixed
    * Gets all library locations defined in Communico
    */
   public function getLibraryLocations() {
