@@ -9,8 +9,8 @@
  * Implements hook_schema().
  *
  * @see hook_schema()
- *
  * @ingroup communico_plus
+ * @return array
  */
 function communico_plus_schema() {
   $schema['communico_locations'] = [

@@ -537,7 +537,7 @@ class CommunicoPlusFilterForm extends FormBase {
   /**
    * @return string[]
    * makes an age group dropdown array
-   * @TODO fix this with var input
+   * @TODO fix this with var input from api
    */
   public function agesDropdown() {
     $dropdownArray = [
