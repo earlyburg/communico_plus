@@ -32,26 +32,27 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $config = Drupal::config('communico_plus.settings');
+    if($config->get('display_calendar') == '1') {
+      $form['layout_box'] = [
+        '#markup' => '<div id="cp-layout-box">',
+      ];
 
-    $form['layout_box'] = [
-      '#markup' => '<div id="cp-layout-box">',
-    ];
+      $form['layout'] = [
+        '#type' => 'radios',
+        '#options' => [0 => 'Feed', 1 => 'Calendar'],
+        '#default_value' => 0,
+        '#ajax' => [
+          'event' => 'change',
+          'callback' => '::updateCommunicoBlock',
+          'wrapper' => 'feed_area_wrapper',
+        ],
+      ];
 
-    $form['layout'] = [
-      '#type' => 'radios',
-      '#options' => [0 => 'Feed', 1 => 'Calendar'],
-      '#default_value' => 0,
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::updateCommunicoBlock',
-        'wrapper' => 'feed_area_wrapper',
-      ],
-    ];
-
-    $form['layout_box_end'] = [
-      '#markup' => '</div>',
-    ];
-
+      $form['layout_box_end'] = [
+        '#markup' => '</div>',
+      ];
+    }
     $form['row_box'] = [
       '#markup' => '<div id="cp-row-box">',
     ];

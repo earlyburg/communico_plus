@@ -17,18 +17,18 @@
   display: flex;
 }
 
-#cp-communico-filter-form #edit-layout .form-item {
+#communico-plus-filter-form #edit-layout .form-item {
   width: 125px;
 }
 
-#cp-communico-filter-form .form-item {
+#communico-plus-filter-form .form-item {
   width: 160px;
   padding: 0.2em;
   flex: 1;
   margin: 0 1%;
 }
 
-#cp-communico-filter-form .form-select {
+#communico-plus-filter-form .form-select {
   text-align-last: center;
 }
 
@@ -197,13 +197,13 @@
     flex-direction: column;
   }
 
-  #cp-communico-filter-form .form-item {
+  #communico-plus-filter-form .form-item {
     width: 100%;
     padding:0;
     margin: 0;
   }
 
-  #cp-communico-filter-form .form-select {
+  #communico-plus-filter-form .form-select {
     margin: 0;
   }
   .form-markup {

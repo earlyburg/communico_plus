@@ -66,6 +66,13 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('linkurl'),
       '#required' => TRUE,
     );
+
+    $form['display_calendar'] = [
+      '#type' => 'checkbox',
+      '#title' => 'Display the option to select a calendar view of events.',
+      '#default_value' => $config->get('display_calendar'),
+    ];
+
     $valid = $config->get('secret_key');
     if($valid != NULL &&  $valid != '') {
       $form['rebuild_drops'] = [
@@ -80,13 +87,13 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
   /**
    * @param array $form
    * @param FormStateInterface $form_state
+   * @throws \Exception
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     if($form_state->getValue('rebuild_drops') == '1') {
       communicoPlusBuildDropdownTables();
     }
   }
-
 
   /**
    * @param array $form
@@ -100,6 +107,7 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
     $config->set('secret_key', $form_state->getValue('secret_key'));
     $config->set('url', $form_state->getValue('url'));
     $config->set('linkurl', $form_state->getValue('linkurl'));
+    $config->set('display_calendar', $form_state->getValue('display_calendar'));
     $config->save();
 
     parent::submitForm($form, $form_state);
