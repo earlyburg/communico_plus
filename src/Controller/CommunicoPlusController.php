@@ -31,11 +31,16 @@ class CommunicoPlusController extends ControllerBase {
   public function event($eventId = NULL) {
     $event = $this->connector->getEvent($eventId);
     ($event['data']['eventImage'] != NULL) ? $imageUrl = $event['data']['eventImage'] : $imageUrl = FALSE;
-     dsm($event); //-->testing
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
     $branchLink = $this->config->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
+    $calendarImagePath = '/'.Drupal::service('module_handler')
+        ->getModule('communico_plus')
+        ->getPath() . '/images/calendar.png';
+    $map_pinImagePath = '/'.Drupal::service('module_handler')
+        ->getModule('communico_plus')
+        ->getPath() . '/images/map_pin.png';
     $var = '';
     $var .='<h1 class="page-title">';
     $var .= $event['data']['title'];
@@ -44,9 +49,12 @@ class CommunicoPlusController extends ControllerBase {
     $var .= $event['data']['subTitle'];
     $var .= '</h2>';
     $var .= '<div class="c-feature">';
+    $var .= '<div class="c-iconimage"><img src="'.$map_pinImagePath.'"></div>';
     $var .= '<a href = "'.$branchLink.'" target="_new">'.$event['data']['locationName'].'</a>';
     $var .= '</div>';
+    $var .= '<br>';
     $var .= '<div class="c-feature">';
+    $var .= '<div class="c-iconimage"><img src="'.$calendarImagePath.'"></div>';
     if ($expire_dt < $today_dt) {
       Drupal::messenger()->addWarning('This event is finished. The event ended on ' . $this->formatDatestamp($event['data']['eventEnd']));
       $var .= 'This event is finished. The event ended on ' . $this->formatDatestamp($event['data']['eventEnd']);
@@ -54,21 +62,28 @@ class CommunicoPlusController extends ControllerBase {
       $var .= 'This event starts on '.$this->formatDatestamp($event['data']['eventStart']);
     }
     $var .= '</div>';
+    $var .= '<br>';
     $var .= '<div class="c-feature">';
-    $var .= 'Age Group: '.implode(', ',$event['data']['ages']);
+    $var .= '<div class="c-title">Age Group:</div> '.implode(', ',$event['data']['ages']);
     $var .= '</div>';
+    $var .= '<br>';
     $var .= '<div class="c-feature">';
-    $var .= 'Event Type: '.implode(', ',$event['data']['types']);
+    $var .= '<div class="c-title">Event Type:</div> '.implode(', ',$event['data']['types']);
     $var .= '</div>';
+    $var .= '<br>';
     $var .= '<p>';
     $var .= $event['data']['shortDescription'];
     $var .= '</p>';
     $var .= '<p>';
     $var .= $event['data']['description'];
     $var .= '</p>';
-
     $return = [
       '#type' => 'markup',
+      '#attached' => [
+        'library' => [
+          'communico_plus/communico_plus.library',
+        ],
+      ],
       '#markup' => $var,
       'one_image' => $this->createEventImage($imageUrl, $eventId),
     ];
@@ -132,8 +147,6 @@ class CommunicoPlusController extends ControllerBase {
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
-    dsm($registration); //-->testing
-
     $branchLink = $this->config->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
     $var = '';
     $var .='<h1 class="page-title">';
@@ -159,7 +172,6 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<p>';
     $var .= $registration['data']['description'];
     $var .= '</p>';
-
     $return = [
       '#type' => 'markup',
       '#markup' => $var,
@@ -219,7 +231,5 @@ class CommunicoPlusController extends ControllerBase {
     }
     return $period;
   }
-
-
 
 }

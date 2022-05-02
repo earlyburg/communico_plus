@@ -177,6 +177,9 @@ class CommunicoPlusFilterForm extends FormBase {
       $expire_dt = new DrupalDateTime($event['eventEnd']);
 
       $branchLink = $config->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
+      $map_pinImagePath = '/'.Drupal::service('module_handler')
+          ->getModule('communico_plus')
+          ->getPath() . '/images/map_pin.png';
       $var = '';
       $var .= '<div id="event-block">';
 
@@ -206,13 +209,20 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= '</h2>';
 
       $var .= '<div class="c-feature">';
-      $var .= '<a href = "'.$branchLink.'" target="_new">'.$event['locationName'].'</a>';
+      $var .= '<a href = "'.$branchLink.'" target="_new">';
+      $var .= '<div class="c-iconimage"><img src="'.$map_pinImagePath.'"></div>';
+      $var .='</a>';
+      $var .= $event['locationName'];
       $var .= '</div>';
-
+      $var .= '<br>';
       $var .= '<div class="c-feature">';
-      $var .= 'Age Group: '.implode(', ',$event['ages']);
+      $var .= '<div class="c-title">Age Group:</div> '.implode(', ',$event['ages']);
       $var .= '</div>';
-
+      $var .= '<br>';
+      $var .= '<div class="c-feature">';
+      $var .= '<div class="c-title">Event Type:</div> '.implode(', ',$event['types']);
+      $var .= '</div>';
+      $var .= '<br>';
       $var .= '<div class="c-feature-paragraph">';
       $var .= '<p>';
       $var .= $event['subTitle'];

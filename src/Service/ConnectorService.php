@@ -285,7 +285,7 @@ class ConnectorService {
       'endDate' => $end_date,
       'locationId' => $location,
       'limit' => $limit,
-      'fields' => 'eventImage,ages'
+      'fields' => 'eventImage,ages,types'
     ];
     if($type) {
       $params['types'] = $type;
