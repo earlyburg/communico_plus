@@ -74,7 +74,7 @@ class ConnectorService {
       'Accept' => 'application/json',
       'Authorization' => $token,
     ];
-    $params = ['fields' => 'eventRegistrationUrl,eventType,eventImage,ages,externalVenueName,types'];
+    $params = ['fields' => 'eventRegistrationUrl,eventType,eventImage,ages,externalVenueName,types,eventRegistrationUrl'];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/events/'.$eventId;
     $data = $this->getFromCommunico($url, $params, $request_headers);
@@ -285,7 +285,7 @@ class ConnectorService {
       'endDate' => $end_date,
       'locationId' => $location,
       'limit' => $limit,
-      'fields' => 'eventImage,ages,types'
+      'fields' => 'eventImage,ages,types,eventRegistrationUrl'
     ];
     if($type) {
       $params['types'] = $type;

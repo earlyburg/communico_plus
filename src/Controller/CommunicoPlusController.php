@@ -6,7 +6,9 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Link;
 use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Core\Url;
 
 class CommunicoPlusController extends ControllerBase {
 
@@ -71,6 +73,17 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<div class="c-title">Event Type:</div> '.implode(', ',$event['data']['types']);
     $var .= '</div>';
     $var .= '<br>';
+
+    $registrationUrl = $event['data']['eventRegistrationUrl'];
+    if($registrationUrl != NULL || $registrationUrl != '') {
+      $regUrl = Url::fromUri($registrationUrl)->toString();
+      $var .= '<div class="c-feature">';
+      $var .= '<a href="'.$regUrl.'" target="_new">';
+      $var .= '<div id="event-sub-button">Register</div>';
+      $var .= '</a>';
+      $var .= '</div>';
+    }
+
     $var .= '<p>';
     $var .= $event['data']['shortDescription'];
     $var .= '</p>';

@@ -169,7 +169,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $imageRenderArray = $controller->createEventImage($imageUrl, $event['eventId']);
       $full_link = $link_url . '/event/' . $event['eventId'];
       $url = Url::fromUri($full_link);
-      $link = Link::fromTextAndUrl(t($event['title']), $url)->toString();
+      $link = Link::fromTextAndUrl($event['title'], $url)->toString();
       $startTime = $controller->findHoursFromDatestring($event['eventStart']);
       $endTime = $controller->findHoursFromDatestring($event['eventEnd']);
       $date = date('Y-m-d H:i:s');
@@ -229,13 +229,15 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= $event['shortDescription'];
       $var .= '</p>';
       $var .= '</div>';
-
       $var .= '</div>'; /* END .block-section-center */
-
       $var .= '<div class="block-section">';
-      if($event['roomId'] != NULL || $event['roomId'] != '') {
-        $var .= '<div class="section-button-contain">';
+      $registrationUrl = $event['eventRegistrationUrl'];
+      if($registrationUrl != NULL || $registrationUrl != '') {
+        $regUrl = Url::fromUri($registrationUrl)->toString();
+        $var .= '<div class="c-feature">';
+        $var .= '<a href="'.$regUrl.'" target="_new">';
         $var .= '<div id="event-sub-button">Register</div>';
+        $var .= '</a>';
         $var .= '</div>';
       }
       $var .= '</div>'; /* END .block-section */

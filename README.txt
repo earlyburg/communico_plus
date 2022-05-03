@@ -1,10 +1,15 @@
-This Communico module provides both a simple plug and play event feeds integration with the Communico "Attend" product as well as a more generic API service.
+This module integrates content from <a href="https://communico.us/" title="Communico">Communico</a> into Drupal. The module makes use of the <a href="https://api.communico.co/docs/" title="Communico api">Communico api</a> to retrieve data about Events and Reservations and display them.
 
-The first feature, a simple feeds integration, is provided with a configurable block that allows feeds from Communico to be pulled in, displayed and themed in different regions of your site. These blocks are customizable by number of events, date ranges, and tags.
+The module creates two blocks, a basic feed block which is configurable and a "wall" type events display that can be filtered. Optionally there is a calendar view that can be utilized, the display of which can be toggled.
 
-The second more advanced integration, the API service, is an abstracted Communico service that provides functions for GET/POST calls to the Communico API and handles the authentication steps and timeouts automatically.
+Thie module provides a service called 'communico_plus.connector' which provide 8 methods for advanced programmers to access data from Communico once Communico API access has been configured for the module.
 
-To utilize this module you will need a Communico API access key and secret. Which must be entered on the main configuration page to utilize either feature of the module.
+You will need a Communico API access key and secret, which must be entered on the main configuration page to utilize the module.
 
 For more information about Communico, please see their website: https://communico.co/
-This is really important!
+
+Installation:
+
+1. Enable the module
+2. Go to the admin page "/admin/config/communico_plus/config" and input the correct information for your environment and save the config.
+3. Check the " Rebuild the filter block select element values" checkbox and hit save. This is    necessary to build the library locations dropdown.
