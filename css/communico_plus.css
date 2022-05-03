@@ -109,14 +109,6 @@
   padding-right: 5px;
 }
 
-.section-button-contain {
-  height:100%;
-  width:100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .c-iconimage {
   width:30px;
   height:30px;

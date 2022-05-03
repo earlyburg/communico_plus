@@ -207,7 +207,6 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .='<h2>';
       $var .= $link;
       $var .= '</h2>';
-
       $var .= '<div class="c-feature">';
       $var .= '<a href = "'.$branchLink.'" target="_new">';
       $var .= '<div class="c-iconimage"><img src="'.$map_pinImagePath.'"></div>';
@@ -241,7 +240,6 @@ class CommunicoPlusFilterForm extends FormBase {
         $var .= '</div>';
       }
       $var .= '</div>'; /* END .block-section */
-
       $var .= '</div>'; /* END #event-block */
       $return .= $var;
     }

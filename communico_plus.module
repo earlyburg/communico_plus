@@ -14,14 +14,13 @@ function communico_plus_theme_suggestions_alter(array &$suggestions, array $vari
 }
 
 /**
- * Implements hook_theme_suggestions_HOOK_alter() for form templates.
- * Show suggestions for custom block types.
  * @param array $suggestions
  * @param array $variables
+ * Implements hook_theme_suggestons_block_alter()
  */
 function communico_plus_theme_suggestions_block_alter(array &$suggestions, array $variables) {
   $content = $variables['elements']['content'];
-  if (isset($content['#block_content']) && $content['#block_content'] instanceof \Drupal\block_content\BlockContentInterface) {
+  if (isset($content['#block_content']) && $content['#block_content'] instanceof Drupal\block_content\BlockContentInterface) {
     $suggestions[] = 'block__' . $content['#block_content']->bundle();
   }
 }
