@@ -13,7 +13,6 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-
 use Drupal\communico_plus\Controller\CommunicoPlusController;
 
 class CommunicoPlusFilterForm extends FormBase {
@@ -159,9 +158,10 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function createWall($events = NULL) {
-    $controller = new CommunicoPlusController();
     $renderer = Drupal::service('renderer');
-    $config = Drupal::config('communico_plus.settings');
+    $config_factory = Drupal::service('config.factory');
+    $communico_plus_connector = Drupal::service('communico_plus.connector');
+    $controller = new CommunicoPlusController($config_factory, $communico_plus_connector);
     $link_url = Drupal::request()->getSchemeAndHttpHost();
     $return = '';
     foreach ($events as $event) {
@@ -176,7 +176,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $today_dt = new DrupalDateTime($date);
       $expire_dt = new DrupalDateTime($event['eventEnd']);
 
-      $branchLink = $config->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
+      $branchLink = $config_factory->get('communico_plus.settings')->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
       $map_pinImagePath = '/'.Drupal::service('module_handler')
           ->getModule('communico_plus')
           ->getPath() . '/images/map_pin.png';
@@ -290,8 +290,11 @@ class CommunicoPlusFilterForm extends FormBase {
    * @return string
    */
   public function createCalendar($events = NULL, $current_date = FALSE) {
+    $config_factory = Drupal::service('config.factory');
+    $communico_plus_connector = Drupal::service('communico_plus.connector');
+    $controller = new CommunicoPlusController($config_factory, $communico_plus_connector);
+    $eventLimitValue = (int) $config_factory->get('communico_plus.settings')->get('event_limit');
     $singleNumArray = ['1','2','3','4','5','6','7','8','9'];
-    $controller = new CommunicoPlusController();
     $newArray = [];
     foreach($events as $event) {
       $newArray[] = [
@@ -301,7 +304,14 @@ class CommunicoPlusFilterForm extends FormBase {
         'allDay' => ($controller->checkIfOneday($event['eventStart'], $event['eventEnd'])) ? '1': '0',
         'title' => $event['title'],
         'eventId' => $event['eventId'],
+        'locationId' => $event['locationId'],
       ];
+    }
+    if ($eventLimitValue != 0 || $eventLimitValue != NULL) {
+      $eventsArray = $this->applyEventLimit($newArray, $eventLimitValue);
+    }
+    else {
+      $eventsArray = $newArray;
     }
     ($current_date) ? $currentDate = $current_date : $currentDate = date('Y-m-d');
     $parts = explode('-', $currentDate);
@@ -329,7 +339,7 @@ class CommunicoPlusFilterForm extends FormBase {
         $x = '0'.$x;
       }
       $dateString = $parts[0].'-'.$parts[1].'-'.$x;
-      $datedKeys = $this->getEventTextKeys($dateString, $newArray);
+      $datedKeys = $this->getEventTextKeys($dateString, $eventsArray);
       $calendarArray[$x][$y][] = $this->createCalendarEventListings($datedKeys);
       ($y == 7) ? $y = 1 : $y++;
     }
@@ -347,7 +357,7 @@ class CommunicoPlusFilterForm extends FormBase {
         $newMonth = '0'.$newMonth;
       }
       $dateString = $parts[0].'-'.$newMonth.'-'.$b;
-      $datedKeys = $this->getEventTextKeys($dateString, $newArray);
+      $datedKeys = $this->getEventTextKeys($dateString, $eventsArray);
       $calendarArray[$b][$a][] = $this->createCalendarEventListings($datedKeys);
       $b++;
     }
@@ -675,9 +685,29 @@ class CommunicoPlusFilterForm extends FormBase {
     return $timeSelects;
   }
 
-
-
-
-
+  /**
+   * @param $eventsArray
+   * @param $eventLimitValue
+   * @return array
+   *
+   */
+  public function applyEventLimit($eventsArray, $eventLimitValue) {
+    $sortArray = [];
+    $lastAndFinal = [];
+    foreach($eventsArray as $event) {
+      $sortArray[$event['eventId']] = $event['locationId'];
+    }
+    $newSortArray = array_unique($sortArray);
+    foreach ($newSortArray as $sortVal) {
+      $sortbit = 0;
+      foreach($eventsArray as $eventArr) {
+        if($eventArr['locationId'] == $sortVal && $sortbit < $eventLimitValue) {
+          $lastAndFinal[] = $eventArr;
+          $sortbit++;
+        }
+      }
+    }
+    return $lastAndFinal;
+  }
 
 }

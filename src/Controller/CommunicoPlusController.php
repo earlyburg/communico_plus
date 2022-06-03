@@ -2,27 +2,46 @@
 
 namespace Drupal\communico_plus\Controller;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Link;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
+use Drupal\communico_plus\Service\ConnectorService;
 
 class CommunicoPlusController extends ControllerBase {
 
+  /**
+   * @var ConnectorService $connector
+   */
   private $connector;
 
+  /**
+   * @param ConfigFactoryInterface $config
+   */
   private $config;
 
   /**
    * CommunicoPlus Controller constructor.
    *
    */
-  public function __construct() {
-    $this->connector = Drupal::service('communico_plus.connector');
-    $this->config = Drupal::config('communico_plus.settings');
+  public function __construct(ConfigFactoryInterface $config_factory, ConnectorService $communico_plus_connector) {
+    $this->config = $config_factory;
+    $this->connector = $communico_plus_connector;
+  }
+
+  /**
+   * @param ContainerInterface $container
+   * @return CommunicoPlusController|static
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('communico_plus.connector')
+    );
   }
 
   /**
@@ -36,7 +55,7 @@ class CommunicoPlusController extends ControllerBase {
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
-    $branchLink = $this->config->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
+    $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
     $calendarImagePath = '/'.Drupal::service('module_handler')
         ->getModule('communico_plus')
         ->getPath() . '/images/calendar.png';
@@ -83,7 +102,6 @@ class CommunicoPlusController extends ControllerBase {
       $var .= '</a>';
       $var .= '</div>';
     }
-
     $var .= '<p>';
     $var .= $event['data']['shortDescription'];
     $var .= '</p>';
@@ -160,7 +178,7 @@ class CommunicoPlusController extends ControllerBase {
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
-    $branchLink = $this->config->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
+    $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
     $var = '';
     $var .='<h1 class="page-title">';
     $var .= $registration['data']['title'];

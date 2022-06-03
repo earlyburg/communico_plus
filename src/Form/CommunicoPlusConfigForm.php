@@ -13,6 +13,13 @@ use Drupal\Core\Form\FormStateInterface;
 class CommunicoPlusConfigForm extends ConfigFormBase {
 
   /**
+   * Config settings.
+   *
+   * @var string
+   */
+  const COMMUNICO_PLUS_SETTINGS = 'communico_plus.settings';
+
+  /**
    * @return string
    */
   public function getFormId() {
@@ -25,7 +32,7 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'communico_plus.settings',
+      static::COMMUNICO_PLUS_SETTINGS,
     ];
   }
 
@@ -36,8 +43,7 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    *
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-
-    $config = $this->config('communico_plus.settings');
+    $config = $this->config(static::COMMUNICO_PLUS_SETTINGS);
 
     $form['access_key'] = array(
       '#type' => 'textfield',
@@ -73,6 +79,13 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('display_calendar'),
     ];
 
+    $form['event_limit'] = array(
+      '#type' => 'textfield',
+      '#title' => 'The number of daily events to list on the calendar view. Leave blank for no limits.',
+      '#default_value' => $config->get('event_limit'),
+      '#required' => FALSE,
+    );
+
     $valid = $config->get('secret_key');
     if($valid != NULL &&  $valid != '') {
       $form['rebuild_drops'] = [
@@ -88,6 +101,7 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    * @throws \Exception
+   *
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     if($form_state->getValue('rebuild_drops') == '1') {
@@ -101,17 +115,15 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    *
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
-    $config = $this->config('communico_plus.settings');
-    $config->set('access_key', $form_state->getValue('access_key'));
-    $config->set('secret_key', $form_state->getValue('secret_key'));
-    $config->set('url', $form_state->getValue('url'));
-    $config->set('linkurl', $form_state->getValue('linkurl'));
-    $config->set('display_calendar', $form_state->getValue('display_calendar'));
-    $config->save();
-
+    $this->configFactory->getEditable(static::COMMUNICO_PLUS_SETTINGS)
+      ->set('access_key', $form_state->getValue('access_key'))
+      ->set('secret_key', $form_state->getValue('secret_key'))
+      ->set('url', $form_state->getValue('url'))
+      ->set('linkurl', $form_state->getValue('linkurl'))
+      ->set('display_calendar', $form_state->getValue('display_calendar'))
+      ->set('event_limit', $form_state->getValue('event_limit'))
+      ->save();
     parent::submitForm($form, $form_state);
   }
-
 
 }
