@@ -22,13 +22,13 @@
 }
 
 #communico-plus-filter-form .form-item {
-  width: 160px;
   padding: 0.2em;
   flex: 1;
   margin: 0 1%;
 }
 
 #communico-plus-filter-form .form-select {
+  width: 160px;
   text-align-last: center;
 }
 
