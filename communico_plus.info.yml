@@ -3,6 +3,6 @@ description: Enables Communico events integration in Drupal
 package: Communico
 type: module
 version: 1.0
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 
 
