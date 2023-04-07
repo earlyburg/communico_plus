@@ -20,6 +20,6 @@ communico_plus.registration:
 communico_plus.filter_form:
   path: '/filter_form'
   defaults:
-    _form:  '\Drupal\communico_plus\Form\CommunicoPlusFilterForm'
+    _form: '\Drupal\communico_plus\Form\CommunicoPlusFilterForm'
   requirements:
     _permission: 'access content'

@@ -5,10 +5,13 @@
  */
 namespace Drupal\communico_plus\Service;
 
-use Drupal;
 use Drupal\Component\Serialization\Json;
-use GuzzleHttp\Client;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Container\ContainerInterface;
+use Drupal\Core\State\State;
+use Drupal\Core\Logger\LoggerChannelFactory;
 
 /**
  * Class ConnectorService
@@ -18,13 +21,59 @@ use GuzzleHttp\Exception\RequestException;
 class ConnectorService {
 
   /**
-   * @var Client
+   * @var ClientInterface $httpClient
    */
-  private Client $httpClient;
+  private $httpClient;
 
+  /**
+   * The config factory interface.
+   *
+   * @var ConfigFactoryInterface $config
+   */
+  private $config;
 
-  public function __construct() {
-    $this->httpClient = Drupal::httpClient();
+ /**
+  * The state store.
+  *
+  * @var State $state
+  */
+ private $state;
+
+  /**
+    * Messenger service.
+    *
+    * @var LoggerChannelFactory $loggerFactory
+    */
+ protected $loggerFactory;
+
+  /**
+   * @param ClientInterface $httpClient
+   * @param ConfigFactoryInterface $config
+   * @param State $state
+   *
+   */
+  public function __construct(ClientInterface $httpClient, ConfigFactoryInterface $config, State $state, LoggerChannelFactory $logger_factory) {
+    $this->httpClient = $httpClient;
+    $this->config = $config;
+    $this->state = $state;
+    $this->loggerFactory = $logger_factory;
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The Drupal service container.
+   *
+   * @return static
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+    $container->get('http_client'),
+    $container->get('config.factory'),
+    $container->get('state'),
+    $container->get('logger.factory'),
+    );
   }
 
   /**
@@ -39,7 +88,7 @@ class ConnectorService {
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/token';
     $data = $this->postToCommunico($url, $request_headers, 'grant_type=client_credentials');
-    Drupal::state()->set('communico_plus.authHeader', $data['token_type'] . ' ' . $data['access_token']);
+    $this->state->set('communico_plus.authHeader', $data['token_type'] . ' ' . $data['access_token']);
     $expire_time = time() + $data['expires_in'];
     $this->setTokenExpire($expire_time);
   }
@@ -64,10 +113,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -91,10 +140,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -125,10 +174,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -155,10 +204,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -181,10 +230,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -207,10 +256,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -233,10 +282,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -268,10 +317,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -314,10 +363,10 @@ class ConnectorService {
     if ($this->isAuthTokenValid() == FALSE) {
       $this->getAuthToken();
     }
-    $token = Drupal::state()->get('communico_plus.authHeader');
+    $token = $this->state->get('communico_plus.authHeader');
     if ($token == FALSE) {
       $this->getAuthToken();
-      $token = Drupal::state()->get('communico_plus.authHeader');
+      $token = $this->state->get('communico_plus.authHeader');
     }
     $request_headers = [
       'Content-Type' => 'application/json',
@@ -335,18 +384,18 @@ class ConnectorService {
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/events';
     $data = $this->getFromCommunico($url, $params, $request_headers);
-    $next_fetch = Drupal::state()->get('communico_plus.nextFetch');
+    $next_fetch = $this->state->get('communico_plus.nextFetch');
     /* If data is null or cached rely on cache data. */
     if ($data == NULL || $data == FALSE || $next_fetch > time()) {
-      $data = Drupal::state()->get('communico_plus.dataCache');
+      $data = $this->state->get('communico_plus.dataCache');
       $data = unserialize($data);
 
       return $data;
     }
     /* Fetch and set both the cache and next fetch timestamp. */
     $serialized = serialize($data['data']['entries']);
-    Drupal::state()->set('communico_plus.dataCache', $serialized);
-    Drupal::state()->set('communico_plus.nextFetch', time() + (60 * 5));
+    $this->state->set('communico_plus.dataCache', $serialized);
+    $this->state->set('communico_plus.nextFetch', time() + (60 * 5));
 
     return $data['data']['entries'];
   }
@@ -369,7 +418,7 @@ class ConnectorService {
       if($status == '200') {
         $data = $response->getBody()->getContents();
       } else {
-        Drupal::logger('communico_plus postToCommunico()')
+        $this->loggerFactory->get('communico_plus')
           ->warning('postToCommunico() returned a status '.$status. ' with the response '.$response->getBody()
               ->getContents());
       }
@@ -401,7 +450,7 @@ class ConnectorService {
       if($status == '200') {
         $data = $response->getBody()->getContents();
       } else {
-        Drupal::logger('communico_plus')
+        $this->loggerFactory->get('communico_plus')
           ->warning('getFromCommunico() returned a status '.$status. ' with the response '.$response->getBody()
               ->getContents());
       }
@@ -419,7 +468,7 @@ class ConnectorService {
    * Set the token expire date.
    */
   protected function setTokenExpire($timestamp) {
-    Drupal::state()->set('communico_plus.token_expire', $timestamp);
+    $this->state->set('communico_plus.token_expire', $timestamp);
   }
 
   /**
@@ -427,7 +476,7 @@ class ConnectorService {
    * Get the token expire date.
    */
   protected function getTokenExpire() {
-    return Drupal::state()->get('communico_plus.token_expire');
+    return $this->state->get('communico_plus.token_expire');
   }
 
   /**
@@ -435,8 +484,7 @@ class ConnectorService {
    * Get communico url.
    */
   protected function getCommunicoUrl() {
-    $config = Drupal::config('communico_plus.settings');
-    return $config->get('url');
+    return $this->config->get('communico_plus.settings')->get('url');
   }
 
   /**
@@ -445,9 +493,8 @@ class ConnectorService {
    */
   protected function getAuthHeaders() {
     /* auth-header for Communico using 'key:secret' format. */
-    $config = Drupal::config('communico_plus.settings');
-    $key = $config->get('access_key');
-    $secret = $config->get('secret_key');
+    $key = $this->config->get('communico_plus.settings')->get('access_key');
+    $secret = $this->config->get('communico_plus.settings')->get('secret_key');
     $auth = $key . ':' . $secret;
     $auth = base64_encode($auth);
     return 'Basic ' . $auth;
