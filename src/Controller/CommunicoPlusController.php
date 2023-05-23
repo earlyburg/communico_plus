@@ -7,7 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal;
 use Drupal\Core\File\FileSystemInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
@@ -174,7 +174,7 @@ class CommunicoPlusController extends ControllerBase {
    *
    */
   public function reservation($registrationId = NULL) {
-    $registration = $this->connector->getRegistration($registrationId);
+    $registration = $this->connector->getReservation($registrationId);
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);

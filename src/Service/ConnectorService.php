@@ -52,7 +52,11 @@ class ConnectorService {
    * @param State $state
    *
    */
-  public function __construct(ClientInterface $httpClient, ConfigFactoryInterface $config, State $state, LoggerChannelFactory $logger_factory) {
+  public function __construct(
+    ClientInterface $httpClient,
+    ConfigFactoryInterface $config,
+    State $state,
+    LoggerChannelFactory $logger_factory) {
     $this->httpClient = $httpClient;
     $this->config = $config;
     $this->state = $state;
