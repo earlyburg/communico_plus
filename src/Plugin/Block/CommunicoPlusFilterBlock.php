@@ -2,9 +2,12 @@
 
 namespace Drupal\communico_plus\Plugin\Block;
 
-use Drupal;
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\tao_iching\Plugin\Block\IchingBlock;
+use Psr\Container\ContainerInterface;
 
 
 /**
@@ -15,7 +18,47 @@ use Drupal\Core\Form\FormStateInterface;
  *   admin_label = @Translation("Communico Plus Filter Block"),
  * )
  */
-class CommunicoPlusFilterBlock extends BlockBase {
+class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * Form builder will be used via Dependency Injection.
+   *
+   * @var \Drupal\Core\Form\FormBuilderInterface
+   */
+  protected FormBuilderInterface $formBuilder;
+
+  /**
+   * @param array $configuration
+   * @param $plugin_id
+   * @param $plugin_definition
+   * @param FormBuilderInterface $form_builder
+   *
+   */
+  public function __construct(
+    array $configuration,
+          $plugin_id,
+          $plugin_definition,
+    FormBuilderInterface $form_builder) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->formBuilder = $form_builder;
+  }
+
+  /**
+   * @param ContainerInterface $container
+   * @param array $configuration
+   * @param $plugin_id
+   * @param $plugin_definition
+   * @return IchingBlock|static
+   *
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('form_builder')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -65,7 +108,7 @@ class CommunicoPlusFilterBlock extends BlockBase {
    * @return array
    */
   public function buildCommunicoPlusFilterBlock($config) {
-    $filterForm = Drupal::formBuilder()->getForm('Drupal\communico_plus\Form\CommunicoPlusFilterForm');
+    $filterForm = $this->formBuilder->getForm('Drupal\communico_plus\Form\CommunicoPlusFilterForm');
     $rendered_events['#filter_form'] = [$filterForm];
     return $rendered_events;
   }

@@ -2,12 +2,17 @@
 
 namespace Drupal\communico_plus\Plugin\Block;
 
-use Drupal;
 use Drupal\Core\Block\BlockBase;
 use Drupal\communico_plus\Controller\CommunicoPlusController;
+use Drupal\communico_plus\Service\ConnectorService;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
+use Drupal\tao_iching\Plugin\Block\IchingBlock;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Provides a basic Communico events Block.
@@ -17,7 +22,65 @@ use Drupal\Core\Url;
  *   admin_label = @Translation("Communico Plus Block"),
  * )
  */
-class CommunicoPlusBlock extends BlockBase {
+class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * @var ConnectorService
+   */
+  protected ConnectorService $connectorService;
+
+  /**
+   * Drupal config factory interface.
+   *
+   * @var ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * Symphony http request stack
+   *
+   * @var RequestStack $requestStack
+   */
+  private RequestStack $requestStack;
+
+  /**
+   * @param array $configuration
+   * @param $plugin_id
+   * @param $plugin_definition
+   * @param ConnectorService $connector_service
+   * @param RequestStack $requestStack
+   */
+  public function __construct(
+    array $configuration,
+          $plugin_id,
+          $plugin_definition,
+          ConnectorService $connector_service,
+          ConfigFactoryInterface $config_factory,
+          RequestStack $requestStack) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->connectorService = $connector_service;
+    $this->configFactory = $config_factory;
+    $this->requestStack = $requestStack;
+  }
+
+  /**
+   * @param ContainerInterface $container
+   * @param array $configuration
+   * @param $plugin_id
+   * @param $plugin_definition
+   * @return IchingBlock|static
+   *
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('communico_plus.connector'),
+      $container->get('config.factory'),
+      $container->get('request_stack'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -84,9 +147,7 @@ class CommunicoPlusBlock extends BlockBase {
    *
    */
   public function buildCommunicoPlusBlock($config) {
-    $connector = Drupal::service('communico_plus.connector');
-    $controller = new CommunicoPlusController();
-    $communico_config = Drupal::config('communico_plus.settings');
+    $controller = new CommunicoPlusController($this->configFactory, $this->connectorService);
     if ($config['communico_plus_block_start'] == NULL || $config['communico_plus_block_start'] == '') {
       $config['communico_plus_block_start'] = date('Y-m-d');
     }
@@ -94,20 +155,20 @@ class CommunicoPlusBlock extends BlockBase {
       $current_date = date('Y-m-d');
       $config['communico_plus_block_end'] = date('Y-m-d', strtotime($current_date . "+7 days"));
     }
-    $events = $connector->getFeed(
+    $events = $this->connectorService->getFeed(
       $config['communico_plus_block_start'],
       $config['communico_plus_block_end'],
       $config['communico_plus_block_type'],
       $config['communico_plus_block_limit']);
     $rendered_events = array();
-    $link_url = Drupal::request()->getSchemeAndHttpHost();
+    $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
 
     foreach ($events as $event) {
-      $branchLinkString = $communico_config->get('linkurl').'/event/'.$event['eventId'].'#branch';
+      $branchLinkString = $this->configFactory->get('communico_plus.settings')->get('linkurl').'/event/'.$event['eventId'].'#branch';
       $branchLink = '<a href = "'.$branchLinkString.'" target="_new">'.$event['locationName'].'</a>';
       $full_link = $link_url . '/event/' . $event['eventId'];
       $url = Url::fromUri($full_link);
-      $link = Link::fromTextAndUrl(t($event['title']), $url )->toString();
+      $link = Link::fromTextAndUrl($this->t($event['title']), $url )->toString();
       $period = $controller->checkIfOneday($event['eventStart'], $event['eventEnd']);
       if($period != FALSE) {
         $eventEnd = ' '.$period;
