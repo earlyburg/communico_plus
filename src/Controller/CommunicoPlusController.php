@@ -5,42 +5,116 @@ namespace Drupal\communico_plus\Controller;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
-use Drupal;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Datetime\DateFormatterInterface;
+use Drupal\Core\Image\ImageFactory;
+use Psr\Container\NotFoundExceptionInterface;
+use Drupal\communico_plus\Service\UtilityService;
+
 
 class CommunicoPlusController extends ControllerBase {
 
   /**
    * @var ConnectorService $connector
    */
-  private $connector;
+  protected ConnectorService $connector;
 
   /**
    * @param ConfigFactoryInterface $config
    */
-  private $config;
+  protected ConfigFactoryInterface $config;
 
   /**
-   * CommunicoPlus Controller constructor.
+   * @param ModuleHandlerInterface $moduleHandler
    *
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ConnectorService $communico_plus_connector) {
+  protected $moduleHandler;
+
+  /**
+   * The file system service.
+   *
+   * @var FileSystemInterface
+   */
+  protected FileSystemInterface $fileSystem;
+
+  /**
+   * @var MessengerInterface $messengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The date formatter service.
+   *
+   * @var DateFormatterInterface
+   */
+  protected DateFormatterInterface $dateFormatter;
+
+  /**
+   * The image factory.
+   *
+   * @var ImageFactory
+   */
+  protected ImageFactory $imageFactory;
+
+  /**
+   * @var UtilityService $utilityService
+   */
+  protected UtilityService $utilityService;
+
+  /**
+   * Communico Plus Controller constructor.
+   *
+   * @param ConfigFactoryInterface $config_factory
+   * @param ConnectorService $communico_plus_connector
+   * @param ModuleHandlerInterface $module_handler
+   * @param FileSystemInterface $file_system
+   * @param MessengerInterface $messengerInterface
+   * @param DateFormatterInterface $date_formatter
+   * @param ImageFactory $image_factory
+   * @param UtilityService $utility_service
+   */
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    ConnectorService $communico_plus_connector,
+    ModuleHandlerInterface $module_handler,
+    FileSystemInterface $file_system,
+    MessengerInterface $messengerInterface,
+    DateFormatterInterface $date_formatter,
+    ImageFactory $image_factory,
+    UtilityService $utility_service,) {
     $this->config = $config_factory;
     $this->connector = $communico_plus_connector;
+    $this->moduleHandler = $module_handler;
+    $this->fileSystem = $file_system;
+    $this->messenger = $messengerInterface;
+    $this->dateFormatter = $date_formatter;
+    $this->imageFactory = $image_factory;
+    $this->utilityService = $utility_service;
   }
 
   /**
    * @param ContainerInterface $container
    * @return CommunicoPlusController|static
+   * @throws ContainerExceptionInterface
+   * @throws NotFoundExceptionInterface
    */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('communico_plus.connector')
+      $container->get('communico_plus.connector'),
+      $container->get('module_handler'),
+      $container->get('file_system'),
+      $container->get('messenger'),
+      $container->get('date.formatter'),
+      $container->get('image.factory'),
+      $container->get('communico_plus.utilities'),
     );
   }
 
@@ -55,15 +129,16 @@ class CommunicoPlusController extends ControllerBase {
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
-    $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
-    $calendarImagePath = '/'.Drupal::service('module_handler')
+    $branchLink = $this->config
+        ->get('communico_plus.settings')
+        ->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
+    $calendarImagePath = '/'.$this->moduleHandler
         ->getModule('communico_plus')
         ->getPath() . '/images/calendar.png';
-    $map_pinImagePath = '/'.Drupal::service('module_handler')
+    $map_pinImagePath = '/'.$this->moduleHandler
         ->getModule('communico_plus')
         ->getPath() . '/images/map_pin.png';
-    $var = '';
-    $var .='<h1 class="page-title">';
+    $var ='<h1 class="page-title">';
     $var .= $event['data']['title'];
     $var .= '</h1>';
     $var .='<h2 class="node__title">';
@@ -77,10 +152,10 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<div class="c-feature">';
     $var .= '<div class="c-iconimage"><img src="'.$calendarImagePath.'"></div>';
     if ($expire_dt < $today_dt) {
-      Drupal::messenger()->addWarning('This event is finished. The event ended on ' . $this->formatDatestamp($event['data']['eventEnd']));
-      $var .= 'This event is finished. The event ended on ' . $this->formatDatestamp($event['data']['eventEnd']);
+      $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']));
+      $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']);
     } else {
-      $var .= 'This event starts on '.$this->formatDatestamp($event['data']['eventStart']);
+      $var .= 'This event starts on '.$this->utilityService->formatDatestamp($event['data']['eventStart']);
     }
     $var .= '</div>';
     $var .= '<br>';
@@ -116,56 +191,9 @@ class CommunicoPlusController extends ControllerBase {
         ],
       ],
       '#markup' => $var,
-      'one_image' => $this->createEventImage($imageUrl, $eventId),
+      'one_image' => $this->utilityService->createEventImage($imageUrl, $eventId),
     ];
     return $return;
-  }
-
-  /**
-   * @param $imageUrl
-   * @param $eventId
-   * @return array
-   * creates an image render array in drupal for an event
-   * @TODO get rid of built up images periodically
-   */
-  public function createEventImage($imageUrl, $eventId) {
-    $image_render_array = FALSE;
-    $path = Drupal::service('file_system')->realpath('.') . '/' . PublicStream::basePath().'/event_images';
-    if (!Drupal::service('file_system')->prepareDirectory($path)) {
-      Drupal::service('file_system')->mkdir($path);
-    }
-    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
-    if($ext != NULL && $ext != '') {
-      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
-      /* check if the image already exists */
-      if(file_exists($file_path_physical)) {
-        $image = Drupal::service('image.factory')->get($file_path_physical);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => 'medium',
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      } else {
-        /* save to fs */
-        $fileOb = file_get_contents($imageUrl);
-        $savedFile = Drupal::service('file_system')->saveData($fileOb, $file_path_physical, FileSystemInterface::EXISTS_REPLACE);
-        $image = Drupal::service('image.factory')->get($savedFile);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => 'medium',
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-    }
-    return $image_render_array;
   }
 
   /**
@@ -179,8 +207,7 @@ class CommunicoPlusController extends ControllerBase {
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
     $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
-    $var = '';
-    $var .='<h1 class="page-title">';
+    $var ='<h1 class="page-title">';
     $var .= $registration['data']['title'];
     $var .= '</h1>';
     $var .='<h2 class="node__title">';
@@ -191,10 +218,10 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '</div>';
     $var .= '<div class="c-feature">';
     if ($expire_dt < $today_dt) {
-      Drupal::messenger()->addWarning('This event is finished. The event ended on ' . $this->formatDatestamp($registration['data']['eventEnd']));
-      $var .= 'This event is finished. The event ended on ' . $this->formatDatestamp($registration['data']['eventEnd']);
+      $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']));
+      $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']);
     } else {
-      $var .= 'This event starts on '.$this->formatDatestamp($registration['data']['eventStart']);
+      $var .= 'This event starts on '.$this->utilityService->formatDatestamp($registration['data']['eventStart']);
     }
     $var .= '</div>';
     $var .= '<p>';
@@ -208,59 +235,6 @@ class CommunicoPlusController extends ControllerBase {
       '#markup' => $var,
     ];
     return $return;
-  }
-
-  /**
-   * @param null $dateString
-   * @return false|string
-   * formats a Communico date into a more readable format
-   */
-  public function formatDatestamp($dateString = NULL) {
-    $date_formatter = Drupal::service('date.formatter');
-    $type = 'medium';
-    $dateObject = new DrupalDateTime($dateString);
-    $timestamp = $dateObject->getTimestamp();
-    $formatted = $date_formatter->format($timestamp, $type, '');
-    $cleanDate = substr($formatted, 0, strpos($formatted, " -"));
-    return $cleanDate;
-  }
-
-  /**
-   * @param null $dateString
-   * @return string
-   *
-   */
-  public function findHoursFromDatestring($dateString = NULL) {
-    $time = new DrupalDateTime($dateString);
-    $time = $time->format('g:i A');
-    return $time;
-  }
-
-  /**
-   * @param null $dateString
-   * @return string
-   *
-   */
-  public function findDateFromDatestring($dateString = NULL) {
-    $time = new DrupalDateTime($dateString);
-    $date = $time->format('Y-m-d');
-    return $date;
-  }
-
-  /**
-   * @param $startDate
-   * @param $endDate
-   * @return false|string
-   *
-   */
-  public function checkIfOneday($startDate, $endDate) {
-    $period = FALSE;
-    $startString = substr($startDate, -8);
-    $endString = substr($endDate, -8);
-    if($startString == '00:00:00' && $endString == '23:59:00') {
-      $period = 'All day';
-    }
-    return $period;
   }
 
 }

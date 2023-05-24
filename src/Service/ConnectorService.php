@@ -9,9 +9,11 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Drupal\Core\State\State;
 use Drupal\Core\Logger\LoggerChannelFactory;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Class ConnectorService
@@ -50,7 +52,7 @@ class ConnectorService {
    * @param ClientInterface $httpClient
    * @param ConfigFactoryInterface $config
    * @param State $state
-   *
+   * @param LoggerChannelFactory $logger_factory
    */
   public function __construct(
     ClientInterface $httpClient,
@@ -64,12 +66,12 @@ class ConnectorService {
   }
 
   /**
-   * {@inheritdoc}
-   *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The Drupal service container.
    *
    * @return static
+   * @throws ContainerExceptionInterface
+   * @throws NotFoundExceptionInterface
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -358,7 +360,6 @@ class ConnectorService {
    * @param $end_date
    * @param $type
    * @param $limit
-   * @param $location
    * @return mixed
    * Retrieve feed from Communico.
    * @TODO return location from this request for filtering

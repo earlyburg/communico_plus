@@ -7,15 +7,118 @@
 
 namespace Drupal\communico_plus\Form;
 
-use Drupal;
+use Drupal\communico_plus\Service\ConnectorService;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Url;
-use Drupal\communico_plus\Controller\CommunicoPlusController;
+use Drupal\communico_plus\Service\UtilityService;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Render\RendererInterface;
 
 class CommunicoPlusFilterForm extends FormBase {
+
+  /**
+   * @var ConfigFactoryInterface $configFactory
+   */
+  protected ConfigFactoryInterface $config;
+
+  /**
+   * @var UtilityService $utilityService
+   */
+  protected UtilityService $utilityService;
+
+  /**
+   * @var LoggerChannelFactory $loggerFactory
+   */
+  protected $loggerFactory;
+
+  /**
+   * @var ConnectorService $connector
+   */
+  protected ConnectorService $connector;
+
+  /**
+   * @var Connection $connection
+   */
+  protected Connection $database;
+
+  /**
+   * Symphony http request stack
+   *
+   * @var RequestStack $requestStack
+   */
+
+  /**
+   * @param ModuleHandlerInterface $moduleHandler
+   *
+   */
+  protected ModuleHandlerInterface $moduleHandler;
+
+  /**
+   * Drupal\Core\Render\RendererInterface definition.
+   *
+   * @var RendererInterface
+   */
+  protected RendererInterface $renderer;
+
+  /**
+   * @param ConfigFactoryInterface $configFactory
+   * @param UtilityService $utility_service
+   * @param LoggerChannelFactory $logger_factory
+   * @param ConnectorService $communico_plus_connector
+   * @param Connection $connection
+   * @param RequestStack $requestStack
+   * @param ModuleHandlerInterface $module_handler
+   * @param RendererInterface $renderer
+   */
+  public function __construct(
+    ConfigFactoryInterface $configFactory,
+    UtilityService $utility_service,
+    LoggerChannelFactory $logger_factory,
+    ConnectorService $communico_plus_connector,
+    Connection $connection,
+    RequestStack $requestStack,
+    ModuleHandlerInterface $module_handler,
+    RendererInterface $renderer) {
+    $this->config = $configFactory;
+    $this->utilityService = $utility_service;
+    $this->loggerFactory = $logger_factory;
+    $this->connector = $communico_plus_connector;
+    $this->database = $connection;
+    $this->requestStack = $requestStack;
+    $this->moduleHandler = $module_handler;
+    $this->renderer = $renderer;
+  }
+
+  /**
+   * @param ContainerInterface $container
+   *   The Drupal service container.
+   *
+   * @return static
+   * @throws ContainerExceptionInterface
+   * @throws NotFoundExceptionInterface
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('communico_plus.utilities'),
+      $container->get('logger.factory'),
+      $container->get('communico_plus.connector'),
+      $container->get('database'),
+      $container->get('request_stack'),
+      $container->get('module_handler'),
+      $container->get('renderer'),
+    );
+  }
 
   /**
    * @return string
@@ -31,7 +134,7 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = Drupal::config('communico_plus.settings');
+    $config = $this->config->get('communico_plus.settings');
     if($config->get('display_calendar') == '1') {
       $form['layout_box'] = [
         '#markup' => '<div id="cp-layout-box">',
@@ -39,7 +142,7 @@ class CommunicoPlusFilterForm extends FormBase {
 
       $form['layout'] = [
         '#type' => 'radios',
-        '#options' => [0 => 'Feed', 1 => 'Calendar'],
+        '#options' => [0 => $this->t('Feed'), 1 => $this->t('Calendar')],
         '#default_value' => 0,
         '#ajax' => [
           'event' => 'change',
@@ -142,7 +245,7 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    Drupal::logger('communico_plus')->warning(' submit never happens ');
+    $this->loggerFactory->get('communico_plus')->warning(' submit never happens ');
     $form_state
       ->set('layout', $form_state->getValue('layout'))
       ->set('event_date', $form_state->getValue('event_date'))
@@ -158,28 +261,22 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function createWall($events = NULL) {
-    $renderer = Drupal::service('renderer');
-    $config_factory = Drupal::service('config.factory');
-    $communico_plus_connector = Drupal::service('communico_plus.connector');
-    $controller = new CommunicoPlusController($config_factory, $communico_plus_connector);
-    $link_url = Drupal::request()->getSchemeAndHttpHost();
+    $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     $return = '';
     foreach ($events as $event) {
       ($event['eventImage'] != NULL) ? $imageUrl = $event['eventImage'] : $imageUrl = FALSE;
-      $imageRenderArray = $controller->createEventImage($imageUrl, $event['eventId']);
+      $imageRenderArray = $this->utilityService->createEventImage($imageUrl, $event['eventId']);
       $full_link = $link_url . '/event/' . $event['eventId'];
       $url = Url::fromUri($full_link);
       $link = Link::fromTextAndUrl($event['title'], $url)->toString();
-      $startTime = $controller->findHoursFromDatestring($event['eventStart']);
-      $endTime = $controller->findHoursFromDatestring($event['eventEnd']);
+      $startTime = $this->utilityService->findHoursFromDatestring($event['eventStart']);
+      $endTime = $this->utilityService->findHoursFromDatestring($event['eventEnd']);
       $date = date('Y-m-d H:i:s');
       $today_dt = new DrupalDateTime($date);
       $expire_dt = new DrupalDateTime($event['eventEnd']);
 
-      $branchLink = $config_factory->get('communico_plus.settings')->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
-      $map_pinImagePath = '/'.Drupal::service('module_handler')
-          ->getModule('communico_plus')
-          ->getPath() . '/images/map_pin.png';
+      $branchLink = $this->config->get('communico_plus.settings')->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
+      $map_pinImagePath = '/'.$this->moduleHandler->getModule('communico_plus')->getPath() . '/images/map_pin.png';
       $var = '';
       $var .= '<div id="event-block">';
 
@@ -187,7 +284,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= '<div class="section-time">';
 
       if ($expire_dt < $today_dt) {
-        $var .= 'This event is finished. The event ended on ' . $controller->formatDatestamp($event['eventEnd']);
+        $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['eventEnd']);
       } else {
         if($startTime == '12:00 AM' && $endTime == '11:59 PM') {
           $var .= 'All Day';
@@ -201,7 +298,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= '<div class="block-section-center">';
       if($imageRenderArray) {
       $var .= '<div class="section-image">';
-        $var .= $renderer->render($imageRenderArray);
+        $var .= $this->renderer->render($imageRenderArray);
         $var .= '</div>';
       }
       $var .='<h2>';
@@ -269,7 +366,7 @@ class CommunicoPlusFilterForm extends FormBase {
    */
   public function createCalendarEventListings($datedArray) {
     $returnText = '';
-    $link_url = Drupal::request()->getSchemeAndHttpHost();
+    $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     foreach($datedArray as $value) {
       $full_link = $link_url . '/event/' . $value['eventId'];
       $url = Url::fromUri($full_link);
@@ -290,18 +387,15 @@ class CommunicoPlusFilterForm extends FormBase {
    * @return string
    */
   public function createCalendar($events = NULL, $current_date = FALSE) {
-    $config_factory = Drupal::service('config.factory');
-    $communico_plus_connector = Drupal::service('communico_plus.connector');
-    $controller = new CommunicoPlusController($config_factory, $communico_plus_connector);
-    $eventLimitValue = (int) $config_factory->get('communico_plus.settings')->get('event_limit');
+    $eventLimitValue = (int) $this->config->get('communico_plus.settings')->get('event_limit');
     $singleNumArray = ['1','2','3','4','5','6','7','8','9'];
     $newArray = [];
     foreach($events as $event) {
       $newArray[] = [
-        'eventDate' => $controller->findDateFromDatestring($event['eventStart']),
-        'eventStart' => $controller->findHoursFromDatestring($event['eventStart']),
-        'eventEnd' => $controller->findHoursFromDatestring($event['eventEnd']),
-        'allDay' => ($controller->checkIfOneday($event['eventStart'], $event['eventEnd'])) ? '1': '0',
+        'eventDate' => $this->utilityService->findDateFromDatestring($event['eventStart']),
+        'eventStart' => $this->utilityService->findHoursFromDatestring($event['eventStart']),
+        'eventEnd' => $this->utilityService->findHoursFromDatestring($event['eventEnd']),
+        'allDay' => ($this->utilityService->checkIfOneday($event['eventStart'], $event['eventEnd'])) ? '1': '0',
         'title' => $event['title'],
         'eventId' => $event['eventId'],
         'locationId' => $event['locationId'],
@@ -393,8 +487,7 @@ class CommunicoPlusFilterForm extends FormBase {
    */
   public function updateCommunicoBlock(array $form, FormStateInterface $form_state) {
     $singleNumArray = ['1','2','3','4','5','6','7','8','9'];
-    $connector = Drupal::service('communico_plus.connector');
-    $block = Drupal\block\Entity\Block::load('communicoplusfilterblock');
+    $block = \Drupal\block\Entity\Block::load('communicoplusfilterblock');
     if ($block) {
       $settings = $block->get('settings');
       $eventsLimit = $settings['communico_plus_filter_block_limit'];
@@ -463,7 +556,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $blockEndDate = $sevenDaysHence;
     }
     /* layout */
-    if(Drupal::request()->request->get('layout') == 1) {
+    if($this->requestStack->getCurrentRequest()->request->get('layout') == 1) {
       $eventDate = FALSE;
       $currentDate = date('Y-m-d');
       $parts = explode('-', $currentDate);
@@ -495,7 +588,7 @@ class CommunicoPlusFilterForm extends FormBase {
         $blockEndDate = $parts[0].'-'.$newMonth.'-'.'07';
         $eventDate = $blockStartDate;
       }
-      $events = $connector->getEventsFeed(
+      $events = $this->connector->getEventsFeed(
         $blockStartDate,
         $blockEndDate,
         $eventType,
@@ -506,7 +599,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $renderedEventsString = $this->createCalendar($events, $eventDate);
     }
     else {
-      $events = $connector->getEventsFeed(
+      $events = $this->connector->getEventsFeed(
         $blockStartDate,
         $blockEndDate,
         $eventType,
@@ -531,12 +624,9 @@ class CommunicoPlusFilterForm extends FormBase {
   }
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return mixed|string
+   * @return string
    */
   function popIfEmpty() {
-    $connector = Drupal::service('communico_plus.connector');
     $eventsLimit = '10';
     $current_date = date('Y-m-d');
     $blockStartDate = $current_date;
@@ -544,7 +634,7 @@ class CommunicoPlusFilterForm extends FormBase {
     $eventType = 'Family Program';
     $eventAge = $this->makeAllAgesString();
     $location = $this->makeAllLocationsString();
-    $events = $connector->getEventsFeed(
+    $events = $this->connector->getEventsFeed(
       $blockStartDate,
       $blockEndDate,
       $eventType,
@@ -639,8 +729,7 @@ class CommunicoPlusFilterForm extends FormBase {
    */
   public function locationDropdown() {
     $dropdownArray = [];
-    $db = Drupal::service('database');
-    $return = $db->select('communico_locations', 'n')
+    $return = $this->database->select('communico_locations', 'n')
       ->fields('n', array('location_id', 'location_name'))
       ->orderBy('location_name')
       ->execute()
@@ -658,8 +747,7 @@ class CommunicoPlusFilterForm extends FormBase {
    */
   public function typesDropdown() {
     $dropdownArray = [];
-    $db = Drupal::service('database');
-    $return = $db->select('communico_types', 'n')
+    $return = $this->database->select('communico_types', 'n')
       ->fields('n', array('number', 'descr'))
       ->orderBy('descr')
       ->execute()

@@ -3,16 +3,19 @@
 namespace Drupal\communico_plus\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
-use Drupal\communico_plus\Controller\CommunicoPlusController;
 use Drupal\communico_plus\Service\ConnectorService;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
 use Drupal\tao_iching\Plugin\Block\IchingBlock;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\communico_plus\Service\UtilityService;
 
 /**
  * Provides a basic Communico events Block.
@@ -44,23 +47,41 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
   private RequestStack $requestStack;
 
   /**
+   * The date formatter service.
+   *
+   * @var DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
+   * @var UtilityService $utilityService
+   */
+  protected UtilityService $utilityService;
+
+  /**
    * @param array $configuration
    * @param $plugin_id
    * @param $plugin_definition
    * @param ConnectorService $connector_service
+   * @param ConfigFactoryInterface $config_factory
    * @param RequestStack $requestStack
+   * @param DateFormatterInterface $date_formatter
    */
   public function __construct(
     array $configuration,
-          $plugin_id,
-          $plugin_definition,
-          ConnectorService $connector_service,
-          ConfigFactoryInterface $config_factory,
-          RequestStack $requestStack) {
+    $plugin_id,
+    $plugin_definition,
+    ConnectorService $connector_service,
+    ConfigFactoryInterface $config_factory,
+    RequestStack $requestStack,
+    DateFormatterInterface $date_formatter,
+    UtilityService $utility_service) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->connectorService = $connector_service;
     $this->configFactory = $config_factory;
     $this->requestStack = $requestStack;
+    $this->dateFormatter = $date_formatter;
+    $this->utilityService = $utility_service;
   }
 
   /**
@@ -69,7 +90,8 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    * @param $plugin_id
    * @param $plugin_definition
    * @return IchingBlock|static
-   *
+   * @throws ContainerExceptionInterface
+   * @throws NotFoundExceptionInterface
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -79,6 +101,8 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
       $container->get('communico_plus.connector'),
       $container->get('config.factory'),
       $container->get('request_stack'),
+      $container->get('date.formatter'),
+      $container->get('communico_plus.utilities'),
     );
   }
 
@@ -147,7 +171,6 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *
    */
   public function buildCommunicoPlusBlock($config) {
-    $controller = new CommunicoPlusController($this->configFactory, $this->connectorService);
     if ($config['communico_plus_block_start'] == NULL || $config['communico_plus_block_start'] == '') {
       $config['communico_plus_block_start'] = date('Y-m-d');
     }
@@ -165,21 +188,21 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
 
     foreach ($events as $event) {
       $branchLinkString = $this->configFactory->get('communico_plus.settings')->get('linkurl').'/event/'.$event['eventId'].'#branch';
-      $branchLink = '<a href = "'.$branchLinkString.'" target="_new">'.$event['locationName'].'</a>';
+      $branchLink = '<a href="'.$branchLinkString.'" target="_new">'.$event['locationName'].'</a>';
       $full_link = $link_url . '/event/' . $event['eventId'];
       $url = Url::fromUri($full_link);
       $link = Link::fromTextAndUrl($this->t($event['title']), $url )->toString();
-      $period = $controller->checkIfOneday($event['eventStart'], $event['eventEnd']);
+      $period = $this->utilityService->checkIfOneday($event['eventStart'], $event['eventEnd']);
       if($period != FALSE) {
         $eventEnd = ' '.$period;
       }
       else {
-        $eventEnd = $controller->formatDateStamp($event['eventEnd']);
+        $eventEnd = $this->utilityService->formatDateStamp($event['eventEnd']);
       }
       $rendered_events[] = array(
         '#theme' => 'communico_plus_item',
         '#title_link' => $link,
-        '#start_date' => $controller->formatDateStamp($event['eventStart']),
+        '#start_date' => $this->utilityService->formatDateStamp($event['eventStart']),
         '#end_date' => $eventEnd,
         '#location' => [
           '#markup' => $branchLink
@@ -189,4 +212,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
     }
     return $rendered_events;
   }
+
+
+
 }

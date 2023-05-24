@@ -9,7 +9,6 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\tao_iching\Plugin\Block\IchingBlock;
 use Psr\Container\ContainerInterface;
 
-
 /**
  * Provides a Communico Filter Block.
  *

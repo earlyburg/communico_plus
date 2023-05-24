@@ -2,3 +2,6 @@ services:
   communico_plus.connector:
     class: Drupal\communico_plus\Service\ConnectorService
     arguments: ['@http_client', '@config.factory', '@state', '@logger.factory']
+  communico_plus.utilities:
+    class: Drupal\communico_plus\Service\UtilityService
+    arguments: [ '@config.factory', '@logger.factory', '@date.formatter', '@file_system', '@image.factory']
