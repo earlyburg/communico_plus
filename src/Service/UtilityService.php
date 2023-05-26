@@ -15,6 +15,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Psr\Container\NotFoundExceptionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Class UtilityService
@@ -58,6 +59,12 @@ class UtilityService {
    */
   protected ImageFactory $imageFactory;
 
+  /**
+   * The entity type manager.
+   *
+   * @var EntityTypeManagerInterface $entity_manager
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * @param ConfigFactoryInterface $config
@@ -71,17 +78,17 @@ class UtilityService {
     LoggerChannelFactory $logger_factory,
     DateFormatterInterface $date_formatter,
     FileSystemInterface $file_system,
-    ImageFactory $image_factory) {
+    ImageFactory $image_factory,
+    EntityTypeManagerInterface $entity_manager) {
     $this->config = $config;
     $this->loggerFactory = $logger_factory;
     $this->dateFormatter = $date_formatter;
     $this->fileSystem = $file_system;
     $this->imageFactory = $image_factory;
+    $this->entityTypeManager = $entity_manager;
   }
 
   /**
-   * {@inheritdoc}
-   *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The Drupal service container.
    *
@@ -96,6 +103,7 @@ class UtilityService {
       $container->get('date.formatter'),
       $container->get('file_system'),
       $container->get('image.factory'),
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -151,7 +159,6 @@ class UtilityService {
     return $date;
   }
 
-
   /**
    * @param $imageUrl
    * @param $eventId
@@ -198,5 +205,25 @@ class UtilityService {
     }
     return $image_render_array;
   }
+
+  /**
+   * @param $array
+   * @return true
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @TODO add more fields for event values
+   */
+  public function createEventPageNode($array) {
+    $newTaoPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+    $newTaoPage->set('title', $array[0]);
+    $newTaoPage->set('body', ['value' => $array[1], 'format' => 'basic_html']);
+    $newTaoPage->enforceIsNew();
+    $newTaoPage->save();
+    return true;
+  }
+
+
+
 
 }

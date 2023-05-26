@@ -25,28 +25,28 @@ class ConnectorService {
   /**
    * @var ClientInterface $httpClient
    */
-  private $httpClient;
+  private ClientInterface $httpClient;
 
   /**
    * The config factory interface.
    *
    * @var ConfigFactoryInterface $config
    */
-  private $config;
+  private ConfigFactoryInterface $config;
 
  /**
   * The state store.
   *
   * @var State $state
   */
- private $state;
+ private State $state;
 
   /**
     * Messenger service.
     *
     * @var LoggerChannelFactory $loggerFactory
     */
- protected $loggerFactory;
+ protected LoggerChannelFactory $loggerFactory;
 
   /**
    * @param ClientInterface $httpClient

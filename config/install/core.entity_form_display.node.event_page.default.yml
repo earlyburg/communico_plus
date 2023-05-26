@@ -1,0 +1,25 @@
+# core.entity_form_display.node.event_page.default.yml
+langcode: en
+status: true
+dependencies:
+    config:
+        - field.field.node.event_page.body
+        - node.type.event_page
+    module:
+        - text
+        - user
+id: node.event_page.default
+targetEntityType: node
+bundle: event_page
+mode: default
+content:
+    body:
+        label: hidden
+        type: text_textarea_with_summary
+        weight: 101
+        settings: {  }
+        third_party_settings: {  }
+    links:
+        weight: 100
+hidden: {  }
+

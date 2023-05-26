@@ -18,11 +18,13 @@ use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\UtilityService;
+use InvalidArgumentException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 
 class CommunicoPlusFilterForm extends FormBase {
 
@@ -71,6 +73,13 @@ class CommunicoPlusFilterForm extends FormBase {
   protected RendererInterface $renderer;
 
   /**
+   * The kill switch.
+   *
+   * @var KillSwitch $killSwitch
+   */
+  private KillSwitch $killSwitch;
+
+  /**
    * @param ConfigFactoryInterface $configFactory
    * @param UtilityService $utility_service
    * @param LoggerChannelFactory $logger_factory
@@ -88,7 +97,8 @@ class CommunicoPlusFilterForm extends FormBase {
     Connection $connection,
     RequestStack $requestStack,
     ModuleHandlerInterface $module_handler,
-    RendererInterface $renderer) {
+    RendererInterface $renderer,
+    KillSwitch $killSwitch) {
     $this->config = $configFactory;
     $this->utilityService = $utility_service;
     $this->loggerFactory = $logger_factory;
@@ -97,6 +107,7 @@ class CommunicoPlusFilterForm extends FormBase {
     $this->requestStack = $requestStack;
     $this->moduleHandler = $module_handler;
     $this->renderer = $renderer;
+    $this->killSwitch = $killSwitch;
   }
 
   /**
@@ -117,6 +128,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $container->get('request_stack'),
       $container->get('module_handler'),
       $container->get('renderer'),
+      $container->get('page_cache_kill_switch'),
     );
   }
 
@@ -267,8 +279,12 @@ class CommunicoPlusFilterForm extends FormBase {
       ($event['eventImage'] != NULL) ? $imageUrl = $event['eventImage'] : $imageUrl = FALSE;
       $imageRenderArray = $this->utilityService->createEventImage($imageUrl, $event['eventId']);
       $full_link = $link_url . '/event/' . $event['eventId'];
-      $url = Url::fromUri($full_link);
-      $link = Link::fromTextAndUrl($event['title'], $url)->toString();
+      try {
+        $url = Url::fromUri(ltrim($full_link));
+        $link = Link::fromTextAndUrl($event['title'], $url)->toString();
+      } catch (InvalidArgumentException $e) {
+        watchdog_exception('communico_plus', $e);
+      }
       $startTime = $this->utilityService->findHoursFromDatestring($event['eventStart']);
       $endTime = $this->utilityService->findHoursFromDatestring($event['eventEnd']);
       $date = date('Y-m-d H:i:s');
@@ -329,12 +345,16 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= '<div class="block-section">';
       $registrationUrl = $event['eventRegistrationUrl'];
       if($registrationUrl != NULL || $registrationUrl != '') {
-        $regUrl = Url::fromUri($registrationUrl)->toString();
-        $var .= '<div class="c-feature">';
-        $var .= '<a href="'.$regUrl.'" target="_new">';
-        $var .= '<div id="event-sub-button">Register</div>';
-        $var .= '</a>';
-        $var .= '</div>';
+        try {
+          $regUrl = Url::fromUri(ltrim($registrationUrl));
+          $var .= '<div class="c-feature">';
+          $var .= '<a href="'.$regUrl->toUriString().'" target="_new">';
+          $var .= '<div id="event-sub-button">Register</div>';
+          $var .= '</a>';
+          $var .= '</div>';
+        } catch (InvalidArgumentException $e) {
+          watchdog_exception('communico_plus', $e);
+        }
       }
       $var .= '</div>'; /* END .block-section */
       $var .= '</div>'; /* END #event-block */
@@ -598,7 +618,7 @@ class CommunicoPlusFilterForm extends FormBase {
       );
       $renderedEventsString = $this->createCalendar($events, $eventDate);
     }
-    else {
+    if($this->requestStack->getCurrentRequest()->request->get('layout') == 0) {
       $events = $this->connector->getEventsFeed(
         $blockStartDate,
         $blockEndDate,

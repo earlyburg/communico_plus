@@ -37,7 +37,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *
    * @var ConfigFactoryInterface
    */
-  protected $configFactory;
+  protected ConfigFactoryInterface $configFactory;
 
   /**
    * Symphony http request stack
@@ -51,7 +51,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *
    * @var DateFormatterInterface
    */
-  protected $dateFormatter;
+  protected DateFormatterInterface $dateFormatter;
 
   /**
    * @var UtilityService $utilityService
@@ -66,6 +66,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    * @param ConfigFactoryInterface $config_factory
    * @param RequestStack $requestStack
    * @param DateFormatterInterface $date_formatter
+   * @param UtilityService $utility_service
    */
   public function __construct(
     array $configuration,
@@ -193,7 +194,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
       $url = Url::fromUri($full_link);
       $link = Link::fromTextAndUrl($this->t($event['title']), $url )->toString();
       $period = $this->utilityService->checkIfOneday($event['eventStart'], $event['eventEnd']);
-      if($period != FALSE) {
+      if($period) {
         $eventEnd = ' '.$period;
       }
       else {
@@ -212,7 +213,5 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
     }
     return $rendered_events;
   }
-
-
 
 }

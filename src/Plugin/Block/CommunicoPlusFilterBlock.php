@@ -20,9 +20,8 @@ use Psr\Container\ContainerInterface;
 class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
   /**
-   * Form builder will be used via Dependency Injection.
    *
-   * @var \Drupal\Core\Form\FormBuilderInterface
+   * @var FormBuilderInterface
    */
   protected FormBuilderInterface $formBuilder;
 

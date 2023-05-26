@@ -1,0 +1,15 @@
+# node.type.event_page.yml
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - communico_plus
+name: 'Event Page'
+type: event_page
+description: 'Content type that is used to store and display Communico events as Drupal pages.</em>'
+help: ''
+new_revision: false
+preview_mode: 1
+display_submitted: true
+
