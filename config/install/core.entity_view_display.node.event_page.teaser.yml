@@ -2,26 +2,42 @@
 langcode: en
 status: true
 dependencies:
-    config:
-        - core.entity_view_mode.node.teaser
-        - field.field.node.event_page.body
-        - node.type.event_page
-    module:
-        - text
-        - user
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.event_page.body
+    - field.field.node.event_page.field_age_group
+    - field.field.node.event_page.field_end_date
+    - field.field.node.event_page.field_event_id
+    - field.field.node.event_page.field_event_type
+    - field.field.node.event_page.field_start_date
+    - node.type.event_page
+  module:
+    - text
+    - user
 id: node.event_page.teaser
 targetEntityType: node
 bundle: event_page
 mode: teaser
 content:
-    body:
-        label: hidden
-        type: text_summary_or_trimmed
-        weight: 101
-        settings:
-            trim_length: 600
-        third_party_settings: {  }
-    links:
-        weight: 100
-hidden: {  }
+  body:
+    type: text_summary_or_trimmed
+    label: hidden
+    settings:
+      trim_length: 600
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_age_group: true
+  field_end_date: true
+  field_event_id: true
+  field_event_type: true
+  field_start_date: true
+  langcode: true
+  search_api_excerpt: true
 

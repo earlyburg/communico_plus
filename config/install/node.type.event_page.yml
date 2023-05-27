@@ -2,14 +2,17 @@
 langcode: en
 status: true
 dependencies:
-  enforced:
-    module:
-      - communico_plus
+  module:
+    - menu_ui
+third_party_settings:
+  menu_ui:
+    available_menus: {  }
+    parent: ''
 name: 'Event Page'
 type: event_page
-description: 'Content type that is used to store and display Communico events as Drupal pages.</em>'
+description: 'A content type for events.'
 help: ''
 new_revision: false
 preview_mode: 1
-display_submitted: true
+display_submitted: false
 
