@@ -79,13 +79,6 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('display_calendar'),
     ];
 
-    $form['event_limit'] = array(
-      '#type' => 'textfield',
-      '#title' => 'The number of daily events to list on the calendar view. Leave blank for no limits.',
-      '#default_value' => $config->get('event_limit'),
-      '#required' => FALSE,
-    );
-
     $valid = $config->get('secret_key');
     if($valid != NULL &&  $valid != '') {
       $form['rebuild_drops'] = [
@@ -121,7 +114,6 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
       ->set('url', $form_state->getValue('url'))
       ->set('linkurl', $form_state->getValue('linkurl'))
       ->set('display_calendar', $form_state->getValue('display_calendar'))
-      ->set('event_limit', $form_state->getValue('event_limit'))
       ->save();
     parent::submitForm($form, $form_state);
   }

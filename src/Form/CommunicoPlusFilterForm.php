@@ -24,7 +24,6 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 
 class CommunicoPlusFilterForm extends FormBase {
 
@@ -73,13 +72,6 @@ class CommunicoPlusFilterForm extends FormBase {
   protected RendererInterface $renderer;
 
   /**
-   * The kill switch.
-   *
-   * @var KillSwitch $killSwitch
-   */
-  private KillSwitch $killSwitch;
-
-  /**
    * @param ConfigFactoryInterface $configFactory
    * @param UtilityService $utility_service
    * @param LoggerChannelFactory $logger_factory
@@ -97,8 +89,7 @@ class CommunicoPlusFilterForm extends FormBase {
     Connection $connection,
     RequestStack $requestStack,
     ModuleHandlerInterface $module_handler,
-    RendererInterface $renderer,
-    KillSwitch $killSwitch) {
+    RendererInterface $renderer) {
     $this->config = $configFactory;
     $this->utilityService = $utility_service;
     $this->loggerFactory = $logger_factory;
@@ -107,7 +98,6 @@ class CommunicoPlusFilterForm extends FormBase {
     $this->requestStack = $requestStack;
     $this->moduleHandler = $module_handler;
     $this->renderer = $renderer;
-    $this->killSwitch = $killSwitch;
   }
 
   /**
@@ -128,7 +118,6 @@ class CommunicoPlusFilterForm extends FormBase {
       $container->get('request_stack'),
       $container->get('module_handler'),
       $container->get('renderer'),
-      $container->get('page_cache_kill_switch'),
     );
   }
 
@@ -177,7 +166,7 @@ class CommunicoPlusFilterForm extends FormBase {
 
     $form['library_location'] = [
       '#type' => 'select',
-      '#options' => $this->locationDropdown(),
+      '#options' => $this->utilityService->locationDropdown(),
       '#empty_option' => $this->t('Library'),
       '#default_value' => $form_state->getValue('library_location'),
       '#ajax' => [
@@ -189,7 +178,7 @@ class CommunicoPlusFilterForm extends FormBase {
 
     $form['library_agegroup'] = [
       '#type' => 'select',
-      '#options' => $this->agesDropdown(),
+      '#options' => $this->utilityService->agesDropdown(),
       '#empty_option' => $this->t('Age Group'),
       '#default_value' => $form_state->getValue('library_agegroup'),
       '#ajax' => [
@@ -201,7 +190,7 @@ class CommunicoPlusFilterForm extends FormBase {
 
     $form['event_type'] = [
       '#type' => 'select',
-      '#options' => $this->typesDropdown(),
+      '#options' => $this->utilityService->typesDropdown(),
       '#empty_option' => $this->t('Event Type'),
       '#default_value' => $form_state->getValue('event_type'),
       '#ajax' => [
@@ -221,6 +210,9 @@ class CommunicoPlusFilterForm extends FormBase {
         'callback' => '::updateCommunicoBlock',
         'wrapper' => 'feed_area_wrapper',
       ],
+      '#states' => [
+        'invisible' => [':input[name="layout"]' => ['value' => 1]]
+      ]
     ];
 
     $form['row_box_end'] = [
@@ -287,8 +279,6 @@ class CommunicoPlusFilterForm extends FormBase {
       }
       $startTime = $this->utilityService->findHoursFromDatestring($event['eventStart']);
       $endTime = $this->utilityService->findHoursFromDatestring($event['eventEnd']);
-      $date = date('Y-m-d H:i:s');
-      $today_dt = new DrupalDateTime($date);
       $expire_dt = new DrupalDateTime($event['eventEnd']);
 
       $branchLink = $this->config->get('communico_plus.settings')->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
@@ -299,7 +289,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $var .= '<div class="block-section">';
       $var .= '<div class="section-time">';
 
-      if ($expire_dt < $today_dt) {
+      if ($this->utilityService->checkIsEventExpired($expire_dt)) {
         $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['eventEnd']);
       } else {
         if($startTime == '12:00 AM' && $endTime == '11:59 PM') {
@@ -407,11 +397,10 @@ class CommunicoPlusFilterForm extends FormBase {
    * @return string
    */
   public function createCalendar($events = NULL, $current_date = FALSE) {
-    $eventLimitValue = (int) $this->config->get('communico_plus.settings')->get('event_limit');
     $singleNumArray = ['1','2','3','4','5','6','7','8','9'];
-    $newArray = [];
+    $eventsArray = [];
     foreach($events as $event) {
-      $newArray[] = [
+      $eventsArray[] = [
         'eventDate' => $this->utilityService->findDateFromDatestring($event['eventStart']),
         'eventStart' => $this->utilityService->findHoursFromDatestring($event['eventStart']),
         'eventEnd' => $this->utilityService->findHoursFromDatestring($event['eventEnd']),
@@ -420,12 +409,6 @@ class CommunicoPlusFilterForm extends FormBase {
         'eventId' => $event['eventId'],
         'locationId' => $event['locationId'],
       ];
-    }
-    if ($eventLimitValue != 0 || $eventLimitValue != NULL) {
-      $eventsArray = $this->applyEventLimit($newArray, $eventLimitValue);
-    }
-    else {
-      $eventsArray = $newArray;
     }
     ($current_date) ? $currentDate = $current_date : $currentDate = date('Y-m-d');
     $parts = explode('-', $currentDate);
@@ -666,23 +649,6 @@ class CommunicoPlusFilterForm extends FormBase {
   }
 
   /**
-   * @return string[]
-   * makes an age group dropdown array
-   * @TODO fix this with var input from api
-   */
-  public function agesDropdown() {
-    $dropdownArray = [
-      'all' => 'All ages',
-      'Birth - 5' => 'Birth - 5',
-      '5 - 12 Years Old' => '5 - 12 Years Old',
-      '13 - 19 Years Old (Teens)' => '13 - 19 Years Old (Teens)',
-      'Adults' => 'Adults',
-      'Seniors' => 'Seniors',
-    ];
-    return $dropdownArray;
-  }
-
-  /**
    * @param $daynumber
    * @return string
    *
@@ -720,7 +686,7 @@ class CommunicoPlusFilterForm extends FormBase {
    */
   public function makeAllAgesString() {
     $newAgeString = '';
-      $dropdownArray = $this->agesDropdown();
+      $dropdownArray = $this->utilityService->agesDropdown();
       foreach($dropdownArray as $age) {
         if($age != 'All ages') {
           $newAgeString .= $age . ',';
@@ -734,48 +700,12 @@ class CommunicoPlusFilterForm extends FormBase {
    *
    */
   public function makeAllLocationsString() {
-    $dropdownArray = $this->locationDropdown();
+    $dropdownArray = $this->utilityService->locationDropdown();
     $newLocationString = '';
     foreach($dropdownArray as $key => $value) {
       $newLocationString .= $key.',';
     }
     return substr($newLocationString, 0, -1);
-  }
-
-  /**
-   * @return array
-   * creates a library locations dropdown array
-   *
-   */
-  public function locationDropdown() {
-    $dropdownArray = [];
-    $return = $this->database->select('communico_locations', 'n')
-      ->fields('n', array('location_id', 'location_name'))
-      ->orderBy('location_name')
-      ->execute()
-      ->fetchAll();
-    foreach($return as $object) {
-      $dropdownArray[$object->location_id] = $object->location_name;
-    }
-    return $dropdownArray;
-  }
-
-  /**
-   * @return array
-   * creates an event types dropdown array
-   *
-   */
-  public function typesDropdown() {
-    $dropdownArray = [];
-    $return = $this->database->select('communico_types', 'n')
-      ->fields('n', array('number', 'descr'))
-      ->orderBy('descr')
-      ->execute()
-      ->fetchAll();
-    foreach($return as $object) {
-      $dropdownArray[$object->number] = $object->descr;
-    }
-    return $dropdownArray;
   }
 
   /**
@@ -793,29 +723,5 @@ class CommunicoPlusFilterForm extends FormBase {
     return $timeSelects;
   }
 
-  /**
-   * @param $eventsArray
-   * @param $eventLimitValue
-   * @return array
-   *
-   */
-  public function applyEventLimit($eventsArray, $eventLimitValue) {
-    $sortArray = [];
-    $lastAndFinal = [];
-    foreach($eventsArray as $event) {
-      $sortArray[$event['eventId']] = $event['locationId'];
-    }
-    $newSortArray = array_unique($sortArray);
-    foreach ($newSortArray as $sortVal) {
-      $sortbit = 0;
-      foreach($eventsArray as $eventArr) {
-        if($eventArr['locationId'] == $sortVal && $sortbit < $eventLimitValue) {
-          $lastAndFinal[] = $eventArr;
-          $sortbit++;
-        }
-      }
-    }
-    return $lastAndFinal;
-  }
 
 }

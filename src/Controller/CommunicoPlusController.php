@@ -125,8 +125,6 @@ class CommunicoPlusController extends ControllerBase {
   public function event($eventId = NULL) {
     $event = $this->connector->getEvent($eventId);
     ($event['data']['eventImage'] != NULL) ? $imageUrl = $event['data']['eventImage'] : $imageUrl = FALSE;
-    $date = date('Y-m-d H:i:s');
-    $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
     $branchLink = $this->config
         ->get('communico_plus.settings')
@@ -150,7 +148,7 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<br>';
     $var .= '<div class="c-feature">';
     $var .= '<div class="c-iconimage"><img src="'.$calendarImagePath.'"></div>';
-    if ($expire_dt < $today_dt) {
+    if ($this->utilityService->checkIsEventExpired($expire_dt)) {
       $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']));
       $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']);
     } else {
@@ -202,8 +200,6 @@ class CommunicoPlusController extends ControllerBase {
    */
   public function reservation($registrationId = NULL) {
     $registration = $this->connector->getReservation($registrationId);
-    $date = date('Y-m-d H:i:s');
-    $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
     $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
     $var ='<h1 class="page-title">';
@@ -216,7 +212,7 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<a href = "'.$branchLink.'" target="_new">'.$registration['data']['locationName'].'</a>';
     $var .= '</div>';
     $var .= '<div class="c-feature">';
-    if ($expire_dt < $today_dt) {
+    if ($this->utilityService->checkIsEventExpired($expire_dt)) {
       $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']));
       $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']);
     } else {

@@ -10,7 +10,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
-use Drupal\tao_iching\Plugin\Block\IchingBlock;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -90,7 +89,7 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    * @param array $configuration
    * @param $plugin_id
    * @param $plugin_definition
-   * @return IchingBlock|static
+   * @return CommunicoPlusBlock|static
    * @throws ContainerExceptionInterface
    * @throws NotFoundExceptionInterface
    */

@@ -1,6 +1,12 @@
 communico_plus.admin:
-  title: 'Communico Plus settings'
-  description: 'Add Global Communico Settings'
+  title: 'Communico Plus API settings.'
+  description: 'Communico API configuration settings'
   parent: system.admin_config_system
   route_name: communico_plus.config
+  weight: 100
+communico_plus.imports:
+  title: 'Communico Plus Event Import settings'
+  description: 'Import events from Communico to Drupal nodes.'
+  parent: system.admin_config_system
+  route_name: communico_plus.import.config
   weight: 100

@@ -138,6 +138,16 @@ function communicoPlusGetLocationArray() {
   return $dropdownArray;
 }
 
+function communicoPlusGetAgegroupsArray() {
+  $dropdownArray = [];
+  $connector = Drupal::service('communico_plus.connector');
+  $return = $connector->getEventAgeGroups();
+  foreach($return['data']['entries'] as $index => $group) {
+    $dropdownArray[$index] = $group;
+  }
+  return $dropdownArray;
+}
+
 /**
  * @throws Exception
  * Inserts data into database tables for dropdowns
@@ -146,6 +156,7 @@ function communicoPlusBuildDropdownTables() {
   $connection = Drupal::database();
   $connection->truncate('communico_types')->execute();
   $connection->truncate('communico_locations')->execute();
+  $connection->truncate('communico_ages')->execute();
   $typesArray = communicoPlusGetTypesArray();
   foreach ($typesArray as $index => $value) {
     $entry = [
@@ -162,6 +173,15 @@ function communicoPlusBuildDropdownTables() {
     ];
     $connection->insert('communico_locations')->fields($entry)->execute();
   }
+  $agegroupArray = communicoPlusGetAgegroupsArray();
+  foreach ($agegroupArray as $index => $value) {
+    $entry = [
+      'number' => $index,
+      'groupname' => $value,
+    ];
+    $connection->insert('communico_ages')->fields($entry)->execute();
+  }
+
 
 }
 

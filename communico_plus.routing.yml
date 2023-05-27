@@ -1,8 +1,15 @@
 communico_plus.config:
-  path: '/admin/config/communico_plus/config'
+  path: '/admin/config/communico_plus/api'
   defaults:
     _form: '\Drupal\communico_plus\Form\CommunicoPlusConfigForm'
     _title: 'Communico Plus Configuration'
+  requirements:
+    _permission: 'administer communico_plus'
+communico_plus.import.config:
+  path: '/admin/config/communico_plus/import'
+  defaults:
+    _form: '\Drupal\communico_plus\Form\CommunicoPlusImportConfigForm'
+    _title: 'Import Communico Plus Events'
   requirements:
     _permission: 'administer communico_plus'
 communico_plus.event:

@@ -6,7 +6,6 @@ use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\tao_iching\Plugin\Block\IchingBlock;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -46,7 +45,7 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
    * @param array $configuration
    * @param $plugin_id
    * @param $plugin_definition
-   * @return IchingBlock|static
+   * @return CommunicoPlusFilterBlock|static
    *
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {

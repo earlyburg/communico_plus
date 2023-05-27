@@ -6,6 +6,7 @@
 namespace Drupal\communico_plus\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
@@ -60,6 +61,11 @@ class UtilityService {
   protected ImageFactory $imageFactory;
 
   /**
+   * @var Connection $connection
+   */
+  protected Connection $database;
+
+  /**
    * The entity type manager.
    *
    * @var EntityTypeManagerInterface $entity_manager
@@ -72,6 +78,8 @@ class UtilityService {
    * @param DateFormatterInterface $date_formatter
    * @param FileSystemInterface $file_system
    * @param ImageFactory $image_factory
+   * @param EntityTypeManagerInterface $entity_manager
+   * @param Connection $connection
    */
   public function __construct(
     ConfigFactoryInterface $config,
@@ -79,13 +87,15 @@ class UtilityService {
     DateFormatterInterface $date_formatter,
     FileSystemInterface $file_system,
     ImageFactory $image_factory,
-    EntityTypeManagerInterface $entity_manager) {
+    EntityTypeManagerInterface $entity_manager,
+    Connection $connection,) {
     $this->config = $config;
     $this->loggerFactory = $logger_factory;
     $this->dateFormatter = $date_formatter;
     $this->fileSystem = $file_system;
     $this->imageFactory = $image_factory;
     $this->entityTypeManager = $entity_manager;
+    $this->database = $connection;
   }
 
   /**
@@ -104,6 +114,7 @@ class UtilityService {
       $container->get('file_system'),
       $container->get('image.factory'),
       $container->get('entity_type.manager'),
+      $container->get('database'),
     );
   }
 
@@ -207,23 +218,91 @@ class UtilityService {
   }
 
   /**
-   * @param $array
+   * @param $eventEndDate
+   * @return bool
+   *
+   */
+  public function checkIsEventExpired($eventEndDate) {
+    $date = date('Y-m-d H:i:s');
+    $today_dt = new DrupalDateTime($date);
+    $expire_dt = new DrupalDateTime($eventEndDate);
+    ($expire_dt < $today_dt) ? $return = true : $return = false;
+    return $return;
+  }
+
+  /**
+   * @param $valArray
    * @return true
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
-   * @TODO add more fields for event values
    */
-  public function createEventPageNode($array) {
-    $newTaoPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
-    $newTaoPage->set('title', $array[0]);
-    $newTaoPage->set('body', ['value' => $array[1], 'format' => 'basic_html']);
-    $newTaoPage->enforceIsNew();
-    $newTaoPage->save();
+  public function createEventPageNode($valArray) {
+    $newEventPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+    $newEventPage->set('title', $valArray['title']);
+    $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
+    $newEventPage->set('field_age_group', ['value' => $valArray['ages']]);
+    $newEventPage->set('field_event_id', ['value' => $valArray['eventId']]);
+    $newEventPage->set('field_event_type', ['value' => $valArray['types']]);
+    $newEventPage->set('field_start_date', ['value' => $valArray['eventStart']]);
+    $newEventPage->set('field_end_date', ['value' => $valArray['eventEnd']]);
+    $newEventPage->enforceIsNew();
+    $newEventPage->save();
     return true;
   }
 
+  /**
+   * @return array
+   * creates a library locations dropdown array
+   *
+   */
+  public function locationDropdown() {
+    $dropdownArray = [];
+    $return = $this->database->select('communico_locations', 'n')
+      ->fields('n', array('location_id', 'location_name'))
+      ->orderBy('location_name')
+      ->execute()
+      ->fetchAll();
+    foreach($return as $object) {
+      $dropdownArray[$object->location_id] = $object->location_name;
+    }
+    return $dropdownArray;
+  }
 
+  /**
+   * @return array
+   * creates an event types dropdown array
+   *
+   */
+  public function typesDropdown() {
+    $dropdownArray = [];
+    $return = $this->database->select('communico_types', 'n')
+      ->fields('n', array('number', 'descr'))
+      ->orderBy('descr')
+      ->execute()
+      ->fetchAll();
+    foreach($return as $object) {
+      $dropdownArray[$object->number] = $object->descr;
+    }
+    return $dropdownArray;
+  }
+
+  /**
+   * @return array
+   * creates an event types dropdown array
+   *
+   */
+  public function agesDropdown() {
+    $dropdownArray = [];
+    $return = $this->database->select('communico_ages', 'n')
+      ->fields('n', array('groupname'))
+      ->execute()
+      ->fetchAll();
+    foreach($return as $object) {
+      $dropdownArray[$object->groupname] = $object->groupname;
+    }
+    return $dropdownArray;
+  }
 
 
 }

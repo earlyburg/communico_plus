@@ -4,4 +4,12 @@ services:
     arguments: ['@http_client', '@config.factory', '@state', '@logger.factory']
   communico_plus.utilities:
     class: Drupal\communico_plus\Service\UtilityService
-    arguments: [ '@config.factory', '@logger.factory', '@date.formatter', '@file_system', '@image.factory', '@entity_type.manager']
+    arguments: [
+      '@config.factory',
+      '@logger.factory',
+      '@date.formatter',
+      '@file_system',
+      '@image.factory',
+      '@entity_type.manager',
+      '@database'
+    ]

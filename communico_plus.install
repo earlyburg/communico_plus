@@ -5,6 +5,8 @@
  * Install, update and uninstall functions for the communico_plus module.
  */
 
+use Drupal\Core\Database\Database;
+
 /**
  * Implements hook_schema().
  *
@@ -14,7 +16,7 @@
  */
 function communico_plus_schema() {
   $schema['communico_locations'] = [
-    'description' => 'Storage for Communico Plus dropdown form element data.',
+    'description' => 'Storage for Communico Plus event locations dropdown form element data.',
     'fields' => [
       'location_id' => [
         'type' => 'varchar',
@@ -34,7 +36,7 @@ function communico_plus_schema() {
     ],
   ];
   $schema['communico_types'] = [
-    'description' => 'Storage for Communico event types dropdown data.',
+    'description' => 'Storage for Communico Plus event types dropdown form element data.',
     'fields' => [
       'number' => [
         'type' => 'varchar',
@@ -50,7 +52,27 @@ function communico_plus_schema() {
       ],
     ],
     'unique keys' => [
-      'location_id' => ['number'],
+      'number' => ['number'],
+    ],
+  ];
+  $schema['communico_ages'] = [
+    'description' => 'Storage for Communico Plus event age groups dropdown form element data.',
+    'fields' => [
+      'number' => [
+        'type' => 'varchar',
+        'length' => 4,
+        'not null' => TRUE,
+        'description' => 'Element Number',
+      ],
+      'groupname' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'Age Groups',
+      ],
+    ],
+    'unique keys' => [
+      'number' => ['number'],
     ],
   ];
   return $schema;
@@ -66,6 +88,7 @@ function communico_plus_schema() {
 function communico_plus_install() {
 #
 }
+
 
 
 
