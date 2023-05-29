@@ -87,7 +87,7 @@ class CommunicoPlusController extends ControllerBase {
     MessengerInterface $messengerInterface,
     DateFormatterInterface $date_formatter,
     ImageFactory $image_factory,
-    UtilityService $utility_service,) {
+    UtilityService $utility_service) {
     $this->config = $config_factory;
     $this->connector = $communico_plus_connector;
     $this->moduleHandler = $module_handler;
@@ -120,7 +120,6 @@ class CommunicoPlusController extends ControllerBase {
   /**
    * @param null $eventId
    * @return string[]
-   * @TODO 'create a node' option for searchability
    */
   public function event($eventId = NULL) {
     $event = $this->connector->getEvent($eventId);

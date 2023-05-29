@@ -280,13 +280,6 @@ class ConnectorService {
     return $data;
   }
 
-
-
-
-
-
-
-
   /**
    * @return false|mixed
    * Gets all age groups defined in Communico
@@ -381,7 +374,6 @@ class ConnectorService {
     if($age) {
       $params['ages'] = $age;
     }
-
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/events';
     $data = $this->getFromCommunico($url, $params, $request_headers);

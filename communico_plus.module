@@ -1,5 +1,7 @@
 <?php
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 
 /**
  * @param array $suggestions
@@ -81,36 +83,6 @@ function communico_plus_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * @param null $id
- * @return mixed
- *
- */
-function communicoPlusGetEventTypeString($id = NULL) {
-  $db = Drupal::service('database');
-  $return = $db->select('communico_types', 'n')
-    ->fields('n', ['descr'])
-    ->condition('n.number', $id, '=')
-    ->execute()
-    ->fetchField();
-  return $return;
-}
-
-/**
- * @param null $id
- * @return mixed
- *
- */
-function communicoPlusGetLibraryLocationString($id = NULL) {
-  $db = Drupal::service('database');
-  $return = $db->select('communico_locations', 'n')
-    ->fields('n', ['location_name'])
-    ->condition('n.location_id', $id, '=')
-    ->execute()
-    ->fetchField();
-  return $return;
-}
-
-/**
  * @return array
  *
  */
@@ -182,6 +154,20 @@ function communicoPlusBuildDropdownTables() {
     $connection->insert('communico_ages')->fields($entry)->execute();
   }
 
-
 }
 
+/**
+ * Implements hook_help().
+ */
+function communico_plus_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.communico_plus':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<div>' . t('This module allows content from Communico to be integrated into Drupal.') . '</div>';
+      $output .= '<div>' . t('Go to the admin page <a href=":aliases">"/admin/config/communico_plus/config"</a> and input the correct information for your environment and save the config.', [':aliases' => Url::fromRoute('communico_plus.config')->toString()]) . '</div>';
+      $output .= '<div>' . t('Check the " Rebuild the filter block select element values" checkbox and hit save. This is necessary to build the library locations dropdown.') . '</div>';
+      $output .= '<div>' . t('Go to the import admin page <a href=":aliases">"/admin/config/communico_plus/import"</a> to import Communico events as node content.', [':aliases' => Url::fromRoute('communico_plus.import.config')->toString()])  . '</div>';
+      return $output;
+  }
+}

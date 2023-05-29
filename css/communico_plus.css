@@ -186,6 +186,13 @@
   font-weight: 600;
 }
 
+#cal-body-row h2 {
+  margin-top: 0px;
+  margin-bottom: 0.5em;
+  margin-left: 3px;
+  font-weight: bold;
+}
+
 /**** media queries ****/
 @media screen and (max-width: 640px) {
   .block-section {

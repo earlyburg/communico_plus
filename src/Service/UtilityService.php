@@ -88,7 +88,7 @@ class UtilityService {
     FileSystemInterface $file_system,
     ImageFactory $image_factory,
     EntityTypeManagerInterface $entity_manager,
-    Connection $connection,) {
+    Connection $connection) {
     $this->config = $config;
     $this->loggerFactory = $logger_factory;
     $this->dateFormatter = $date_formatter;
@@ -123,7 +123,7 @@ class UtilityService {
    * @return string
    * formats a Communico date into a more readable format
    */
-  public function formatDatestamp($dateString = NULL) {
+  public function formatDatestamp($dateString) {
     $type = 'medium';
     $dateObject = new DrupalDateTime($dateString);
     $timestamp = $dateObject->getTimestamp();
@@ -239,13 +239,27 @@ class UtilityService {
    */
   public function createEventPageNode($valArray) {
     $newEventPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+    $start_date = $this->findDateFromDatestring($valArray['eventStart']);
+    $end_date = $this->findDateFromDatestring($valArray['eventEnd']);
+    $agesArray = [];
+    $typesArray = [];
+    foreach($valArray['ages'] as $age) {
+      $agesArray['value'] = $age;
+    }
+    foreach($valArray['types'] as $type) {
+      $typesArray['value'] = $type;
+    }
     $newEventPage->set('title', $valArray['title']);
+    $newEventPage->set('field_subtitle', ['value' => $valArray['subTitle']]);
+    $newEventPage->set('field_short_description', ['value' => $valArray['shortDescription']]);
     $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
-    $newEventPage->set('field_age_group', ['value' => $valArray['ages']]);
+    $newEventPage->set('field_age_group', $agesArray);
     $newEventPage->set('field_event_id', ['value' => $valArray['eventId']]);
-    $newEventPage->set('field_event_type', ['value' => $valArray['types']]);
-    $newEventPage->set('field_start_date', ['value' => $valArray['eventStart']]);
-    $newEventPage->set('field_end_date', ['value' => $valArray['eventEnd']]);
+    $newEventPage->set('field_event_type', $typesArray);
+    $newEventPage->set('field_start_date', ['value' => $start_date]);
+    $newEventPage->set('field_end_date', ['value' => $end_date]);
+    $newEventPage->set('field_library_location', ['value' => $valArray['locationName']]);
+    $newEventPage->set('field_location_id', ['value' => $valArray['locationId']]);
     $newEventPage->enforceIsNew();
     $newEventPage->save();
     return true;
@@ -304,5 +318,137 @@ class UtilityService {
     return $dropdownArray;
   }
 
+  /**
+   * @param $timestamp
+   * @return false|mixed
+   *
+   */
+  public function checkEventExists($eventId) {
+    $idString = $this->database->select('node__field_event_id', 'n')
+      ->fields('n', ['field_event_id_value'])
+      ->condition('n.field_event_id_value', $eventId, '=')
+      ->execute()
+      ->fetchField();
+    ($idString) ? $return = TRUE : $return = FALSE;
+    return $return;
+  }
+
+  /**
+   * @param $locationId
+   * @return bool
+   *
+   */
+  public function checkLocationExists($locationId) {
+    $idString = $this->database->select('node__field_location_id', 'n')
+      ->fields('n', ['field_location_id_value 	'])
+      ->condition('n.field_location_id_value 	', $locationId, '=')
+      ->execute()
+      ->fetchField();
+    ($idString) ? $return = TRUE : $return = FALSE;
+    return $return;
+  }
+
+  /**
+   * @return array
+   *
+   */
+  public function getStoredLibraryLocations() {
+    $returnArray = [];
+    foreach($this->locationDropdown() as $locationId => $nameString) {
+      if($this->checkLocationExists($locationId)) {
+        $returnArray[] = $nameString;
+      }
+    }
+    return $returnArray;
+  }
+
+  /**
+   * @param null $id
+   * @return mixed
+   *
+   */
+  public function getEventTypeString($id = NULL) {
+    $return = $this->database->select('communico_types', 'n')
+      ->fields('n', ['descr'])
+      ->condition('n.number', $id, '=')
+      ->execute()
+      ->fetchField();
+    return $return;
+  }
+
+  /**
+   * @return string[]
+   *
+   */
+  public function datesDropdown() {
+    $timeSelects = [
+      'today' =>'Today',
+      'tomorrow' => 'Tomorrow',
+      'thisweek' => 'This Week',
+      'nextweek' => 'Next Week',
+      'nextmonth' => 'Next Month',
+    ];
+    return $timeSelects;
+  }
+
+  /**
+   * @param $daynumber
+   * @return string
+   *
+   */
+  public function getDayName($daynumber) {
+    switch ($daynumber) {
+      case $daynumber == '1':
+        $dayname = 'Monday';
+        break;
+      case $daynumber == '2':
+        $dayname = 'Tuesday';
+        break;
+      case $daynumber == '3':
+        $dayname = 'Wednesday';
+        break;
+      case $daynumber == '4':
+        $dayname = 'Thursday';
+        break;
+      case $daynumber == '5':
+        $dayname = 'Friday';
+        break;
+      case $daynumber == '6':
+        $dayname = 'Saturday';
+        break;
+      case $daynumber == '7':
+        $dayname = 'Sunday';
+        break;
+    }
+    return $dayname;
+  }
+
+  /**
+   * @return string
+   *
+   */
+  public function makeAllAgesString() {
+    $newAgeString = '';
+    $dropdownArray = $this->agesDropdown();
+    foreach($dropdownArray as $age) {
+      if($age != 'All ages') {
+        $newAgeString .= $age . ',';
+      }
+    }
+    return substr($newAgeString, 0, -1);
+  }
+
+  /**
+   * @return string
+   *
+   */
+  public function makeAllLocationsString() {
+    $dropdownArray = $this->locationDropdown();
+    $newLocationString = '';
+    foreach($dropdownArray as $key => $value) {
+      $newLocationString .= $key.',';
+    }
+    return substr($newLocationString, 0, -1);
+  }
 
 }

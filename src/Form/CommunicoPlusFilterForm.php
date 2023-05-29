@@ -18,6 +18,7 @@ use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\UtilityService;
+use Exception;
 use InvalidArgumentException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -202,7 +203,7 @@ class CommunicoPlusFilterForm extends FormBase {
 
     $form['event_date'] = [
       '#type' => 'select',
-      '#options' => $this->datesDropdown(),
+      '#options' => $this->utilityService->datesDropdown(),
       '#empty_option' => $this->t('Date'),
       '#default_value' => $form_state->getValue('event_date'),
       '#ajax' => [
@@ -239,9 +240,7 @@ class CommunicoPlusFilterForm extends FormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-#
-  }
+  public function validateForm(array &$form, FormStateInterface $form_state) {}
 
   /**
    * @param array $form
@@ -263,6 +262,7 @@ class CommunicoPlusFilterForm extends FormBase {
    * @param null $events
    * @return string
    *
+   * @throws Exception
    */
   public function createWall($events = NULL) {
     $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
@@ -458,7 +458,8 @@ class CommunicoPlusFilterForm extends FormBase {
       $calendarArray[$b][$a][] = $this->createCalendarEventListings($datedKeys);
       $b++;
     }
-    $var = '';
+    $headDate = date('l F d, Y');
+    $var = '<h2> Today is: '.$headDate.'</h2>';
     $var .= '<div id="cal-head-row">';
     $var .= '<div class="day-name">Monday</div>';
     $var .= '<div class="day-name">Tuesday</div>';
@@ -471,9 +472,9 @@ class CommunicoPlusFilterForm extends FormBase {
     $var .= '<div id="cal-body-row">';
     foreach($calendarArray as $date => $dayNum) {
       $dayNumber = array_key_first($dayNum);
-      $dayName = $this->getDayName($dayNumber);
+      $dayName = $this->utilityService->getDayName($dayNumber);
       $var .= '<div class="cal-cell-'.$dayNumber.'">';
-      $var .= '<h4>'.$date.'</h4>';
+      $var .= '<h2>'.$date.'</h2>';
       $var .= '<div class="cal-data">'.$dayNum[$dayNumber][0].'</div>';
       $var .= '</div>';
       ($dayName == 'Sunday') ? $var .='<div class="break"></div>' : $var .='';
@@ -507,7 +508,7 @@ class CommunicoPlusFilterForm extends FormBase {
     /* handle event types */
     $eventTypeRaw = $form_state->getValue('event_type');
     if($eventTypeRaw != NULL && $eventTypeRaw != '') {
-      $eventType = communicoPlusGetEventTypeString($form_state->getValue('event_type'));
+      $eventType = $this->utilityService->getEventTypeString($form_state->getValue('event_type'));
     } else {
       $eventType = FALSE;
     }
@@ -515,7 +516,7 @@ class CommunicoPlusFilterForm extends FormBase {
     $ageRaw = $form_state->getValue('library_agegroup');
     if($ageRaw != NULL && $ageRaw != '') {
       if($ageRaw == 'all') {
-        $eventAge = $this->makeAllAgesString();
+        $eventAge = $this->utilityService->makeAllAgesString();
       } else {
         $eventAge = $ageRaw;
       }
@@ -527,7 +528,7 @@ class CommunicoPlusFilterForm extends FormBase {
     if($eventLocationRaw != NULL && $eventLocationRaw != '') {
       $location = $eventLocationRaw;
     } else {
-      $location = $this->makeAllLocationsString();
+      $location = $this->utilityService->makeAllLocationsString();
     }
     /* handle event dates */
     $eventDateRaw = $form_state->getValue('event_date');
@@ -635,8 +636,8 @@ class CommunicoPlusFilterForm extends FormBase {
     $blockStartDate = $current_date;
     $blockEndDate = date('Y-m-d', strtotime($current_date . "+7 days"));
     $eventType = 'Family Program';
-    $eventAge = $this->makeAllAgesString();
-    $location = $this->makeAllLocationsString();
+    $eventAge = $this->utilityService->makeAllAgesString();
+    $location = $this->utilityService->makeAllLocationsString();
     $events = $this->connector->getEventsFeed(
       $blockStartDate,
       $blockEndDate,
@@ -648,80 +649,9 @@ class CommunicoPlusFilterForm extends FormBase {
     return $this->createWall($events);
   }
 
-  /**
-   * @param $daynumber
-   * @return string
-   *
-   */
-  public function getDayName($daynumber) {
-    switch ($daynumber) {
-      case $daynumber == '1':
-        $dayname = 'Monday';
-        break;
-      case $daynumber == '2':
-        $dayname = 'Tuesday';
-        break;
-      case $daynumber == '3':
-        $dayname = 'Wednesday';
-        break;
-      case $daynumber == '4':
-        $dayname = 'Thursday';
-        break;
-      case $daynumber == '5':
-        $dayname = 'Friday';
-        break;
-      case $daynumber == '6':
-        $dayname = 'Saturday';
-        break;
-      case $daynumber == '7':
-        $dayname = 'Sunday';
-        break;
-    }
-    return $dayname;
-  }
 
-  /**
-   * @return string
-   *
-   */
-  public function makeAllAgesString() {
-    $newAgeString = '';
-      $dropdownArray = $this->utilityService->agesDropdown();
-      foreach($dropdownArray as $age) {
-        if($age != 'All ages') {
-          $newAgeString .= $age . ',';
-        }
-      }
-    return substr($newAgeString, 0, -1);
-  }
 
-  /**
-   * @return string
-   *
-   */
-  public function makeAllLocationsString() {
-    $dropdownArray = $this->utilityService->locationDropdown();
-    $newLocationString = '';
-    foreach($dropdownArray as $key => $value) {
-      $newLocationString .= $key.',';
-    }
-    return substr($newLocationString, 0, -1);
-  }
 
-  /**
-   * @return string[]
-   *
-   */
-  public function datesDropdown() {
-    $timeSelects = [
-      'today' =>'Today',
-      'tomorrow' => 'Tomorrow',
-      'thisweek' => 'This Week',
-      'nextweek' => 'Next Week',
-      'nextmonth' => 'Next Month',
-    ];
-    return $timeSelects;
-  }
 
 
 }
