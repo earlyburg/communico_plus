@@ -9,6 +9,8 @@ dependencies:
     - field.field.node.event_page.field_end_date
     - field.field.node.event_page.field_event_id
     - field.field.node.event_page.field_event_type
+    - field.field.node.event_page.field_library_location
+    - field.field.node.event_page.field_location_id
     - field.field.node.event_page.field_short_description
     - field.field.node.event_page.field_start_date
     - field.field.node.event_page.field_subtitle
@@ -16,6 +18,8 @@ dependencies:
   module:
     - text
     - user
+_core:
+  default_config_hash: nLGdcKShjjeWTIoln2VvQ4Rmf1eCYkuk7bz72qp66p4
 id: node.event_page.teaser
 targetEntityType: node
 bundle: event_page
@@ -39,6 +43,8 @@ hidden:
   field_end_date: true
   field_event_id: true
   field_event_type: true
+  field_library_location: true
+  field_location_id: true
   field_short_description: true
   field_start_date: true
   field_subtitle: true
