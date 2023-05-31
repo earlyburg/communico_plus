@@ -1,11 +1,11 @@
-# field.storage.node.field_library_location.yml
+# field.storage.node.field_communico_subtitle.yml
 langcode: en
 status: true
 dependencies:
   module:
     - node
-id: node.field_library_location
-field_name: field_library_location
+id: node.field_communico_subtitle
+field_name: field_communico_subtitle
 entity_type: node
 type: string
 settings:

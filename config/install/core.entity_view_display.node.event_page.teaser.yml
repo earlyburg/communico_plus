@@ -5,15 +5,15 @@ dependencies:
   config:
     - core.entity_view_mode.node.teaser
     - field.field.node.event_page.body
-    - field.field.node.event_page.field_age_group
-    - field.field.node.event_page.field_end_date
-    - field.field.node.event_page.field_event_id
-    - field.field.node.event_page.field_event_type
-    - field.field.node.event_page.field_library_location
-    - field.field.node.event_page.field_location_id
-    - field.field.node.event_page.field_short_description
-    - field.field.node.event_page.field_start_date
-    - field.field.node.event_page.field_subtitle
+    - field.field.node.event_page.field_communico_age_group
+    - field.field.node.event_page.field_communico_end_date
+    - field.field.node.event_page.field_communico_event_id
+    - field.field.node.event_page.field_communico_event_type
+    - field.field.node.event_page.field_communico_library_location
+    - field.field.node.event_page.field_communico_location_id
+    - field.field.node.event_page.field_communico_shortdescription
+    - field.field.node.event_page.field_communico_start_date
+    - field.field.node.event_page.field_communico_subtitle
     - node.type.event_page
   module:
     - text
@@ -39,15 +39,15 @@ content:
     weight: 100
     region: content
 hidden:
-  field_age_group: true
-  field_end_date: true
-  field_event_id: true
-  field_event_type: true
-  field_library_location: true
-  field_location_id: true
-  field_short_description: true
-  field_start_date: true
-  field_subtitle: true
+  field_communico_age_group: true
+  field_communico_end_date: true
+  field_communico_event_id: true
+  field_communico_event_type: true
+  field_communico_library_location: true
+  field_communico_location_id: true
+  field_communico_shortdescription: true
+  field_communico_start_date: true
+  field_communico_subtitle: true
   langcode: true
   search_api_excerpt: true
 

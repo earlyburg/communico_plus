@@ -59,7 +59,7 @@ class CommunicoPlusFilterForm extends FormBase {
    * @var RequestStack $requestStack
    */
   protected $requestStack;
-  
+
   /**
    * @param ModuleHandlerInterface $moduleHandler
    *

@@ -1,11 +1,11 @@
-# field.storage.node.field_event_type.yml
+# field.storage.node.field_communico_library_location.yml
 langcode: en
 status: true
 dependencies:
   module:
     - node
-id: node.field_event_type
-field_name: field_event_type
+id: node.field_communico_library_location
+field_name: field_communico_library_location
 entity_type: node
 type: string
 settings:
@@ -14,9 +14,10 @@ settings:
   is_ascii: false
 module: core
 locked: false
-cardinality: -1
+cardinality: 1
 translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
+
 

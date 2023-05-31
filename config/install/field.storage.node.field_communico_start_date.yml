@@ -1,16 +1,17 @@
-# field.storage.node.field_short_description.yml
+# field.storage.node.field_communico_start_date.yml
 langcode: en
 status: true
 dependencies:
   module:
+    - datetime
     - node
-id: node.field_short_description
-field_name: field_short_description
+id: node.field_communico_start_date
+field_name: field_communico_start_date
 entity_type: node
-type: string_long
+type: datetime
 settings:
-  case_sensitive: false
-module: core
+  datetime_type: date
+module: datetime
 locked: false
 cardinality: 1
 translatable: true

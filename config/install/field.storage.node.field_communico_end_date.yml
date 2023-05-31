@@ -1,12 +1,12 @@
-# field.storage.node.field_end_date.yml
+# field.storage.node.field_communico_end_date.yml
 langcode: en
 status: true
 dependencies:
   module:
     - datetime
     - node
-id: node.field_end_date
-field_name: field_end_date
+id: node.field_communico_end_date
+field_name: field_communico_end_date
 entity_type: node
 type: datetime
 settings:

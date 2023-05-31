@@ -1,15 +1,17 @@
-# field.storage.node.field_subtitle.yml
+# field.storage.node.field_communico_location_id.yml
 langcode: en
 status: true
 dependencies:
   module:
     - node
-id: node.field_subtitle
-field_name: field_subtitle
+id: node.field_communico_location_id
+field_name: field_communico_location_id
 entity_type: node
-type: string_long
+type: string
 settings:
+  max_length: 255
   case_sensitive: false
+  is_ascii: false
 module: core
 locked: false
 cardinality: 1

@@ -1,0 +1,19 @@
+# field.field.node.event_page.field_communico_library_location.yml
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_communico_library_location
+    - node.type.event_page
+id: node.event_page.field_communico_library_location
+field_name: field_communico_library_location
+entity_type: node
+bundle: event_page
+label: 'Communico library location'
+description: 'The communico event location name.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

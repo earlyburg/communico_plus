@@ -250,16 +250,16 @@ class UtilityService {
       $typesArray['value'] = $type;
     }
     $newEventPage->set('title', $valArray['title']);
-    $newEventPage->set('field_subtitle', ['value' => $valArray['subTitle']]);
-    $newEventPage->set('field_short_description', ['value' => $valArray['shortDescription']]);
+    $newEventPage->set('field_communico_subtitle', ['value' => $valArray['subTitle']]);
+    $newEventPage->set('field_communico_shortdescription', ['value' => $valArray['shortDescription']]);
     $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
-    $newEventPage->set('field_age_group', $agesArray);
-    $newEventPage->set('field_event_id', ['value' => $valArray['eventId']]);
-    $newEventPage->set('field_event_type', $typesArray);
-    $newEventPage->set('field_start_date', ['value' => $start_date]);
-    $newEventPage->set('field_end_date', ['value' => $end_date]);
-    $newEventPage->set('field_library_location', ['value' => $valArray['locationName']]);
-    $newEventPage->set('field_location_id', ['value' => $valArray['locationId']]);
+    $newEventPage->set('field_communico_age_group', $agesArray);
+    $newEventPage->set('field_communico_event_id', ['value' => $valArray['eventId']]);
+    $newEventPage->set('field_communico_event_type', $typesArray);
+    $newEventPage->set('field_communico_start_date', ['value' => $start_date]);
+    $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
+    $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
+    $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
     $newEventPage->enforceIsNew();
     $newEventPage->save();
     return true;
@@ -324,9 +324,9 @@ class UtilityService {
    *
    */
   public function checkEventExists($eventId) {
-    $idString = $this->database->select('node__field_event_id', 'n')
-      ->fields('n', ['field_event_id_value'])
-      ->condition('n.field_event_id_value', $eventId, '=')
+    $idString = $this->database->select('node__field_communico_event_id', 'n')
+      ->fields('n', ['field_communico_event_id_value'])
+      ->condition('n.field_communico_event_id_value', $eventId, '=')
       ->execute()
       ->fetchField();
     ($idString) ? $return = TRUE : $return = FALSE;
@@ -339,9 +339,9 @@ class UtilityService {
    *
    */
   public function checkLocationExists($locationId) {
-    $idString = $this->database->select('node__field_location_id', 'n')
-      ->fields('n', ['field_location_id_value 	'])
-      ->condition('n.field_location_id_value 	', $locationId, '=')
+    $idString = $this->database->select('node__field_communico_location_id', 'n')
+      ->fields('n', ['field_communico_location_id_value 	'])
+      ->condition('n.field_communico_location_id_value 	', $locationId, '=')
       ->execute()
       ->fetchField();
     ($idString) ? $return = TRUE : $return = FALSE;
