@@ -231,41 +231,6 @@ class UtilityService {
   }
 
   /**
-   * @param $valArray
-   * @return true
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityStorageException
-   */
-  public function createEventPageNode($valArray) {
-    $newEventPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
-    $start_date = $this->findDateFromDatestring($valArray['eventStart']);
-    $end_date = $this->findDateFromDatestring($valArray['eventEnd']);
-    $agesArray = [];
-    $typesArray = [];
-    foreach($valArray['ages'] as $age) {
-      $agesArray['value'] = $age;
-    }
-    foreach($valArray['types'] as $type) {
-      $typesArray['value'] = $type;
-    }
-    $newEventPage->set('title', $valArray['title']);
-    $newEventPage->set('field_communico_subtitle', ['value' => $valArray['subTitle']]);
-    $newEventPage->set('field_communico_shortdescription', ['value' => $valArray['shortDescription']]);
-    $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
-    $newEventPage->set('field_communico_age_group', $agesArray);
-    $newEventPage->set('field_communico_event_id', ['value' => $valArray['eventId']]);
-    $newEventPage->set('field_communico_event_type', $typesArray);
-    $newEventPage->set('field_communico_start_date', ['value' => $start_date]);
-    $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
-    $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
-    $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
-    $newEventPage->enforceIsNew();
-    $newEventPage->save();
-    return true;
-  }
-
-  /**
    * @return array
    * creates a library locations dropdown array
    *

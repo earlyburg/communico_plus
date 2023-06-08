@@ -83,6 +83,29 @@ function communico_plus_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements HOOK_cron.
+ *
+ * @return void
+ */
+function communico_plus_cron() {
+  $entityTypeManager = Drupal::service('entity_type.manager')->getStorage('node');
+  $utilityService = Drupal::service('communico_plus.utilities');
+  #$entityTypeManager->getStorage('node');
+  $eventNids = $entityTypeManager->getQuery()
+    ->condition('type', 'event_page')
+    ->condition('status', '1')
+    ->execute();
+  foreach($eventNids as $id) {
+    $node = $entityTypeManager->load($id);
+    if ($utilityService->checkIsEventExpired($node->field_communico_start_date->value)) {
+      $node->setUnpublished();
+      $node->save();
+    }
+    $entityTypeManager->resetCache([$id]);
+  }
+}
+
+/**
  * @return array
  *
  */
@@ -153,7 +176,60 @@ function communicoPlusBuildDropdownTables() {
     ];
     $connection->insert('communico_ages')->fields($entry)->execute();
   }
+}
 
+/**
+ * @param $valArray
+ * @return true
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ * @throws \Drupal\Core\Entity\EntityStorageException
+ */
+function createEventPageNode($valArray) {
+  $entityTypeManager = Drupal::service('entity_type.manager');
+  $utilityService = Drupal::service('communico_plus.utilities');
+  $newEventPage = $entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+  $start_date = $utilityService->findDateFromDatestring($valArray['eventStart']);
+  $end_date = $utilityService->findDateFromDatestring($valArray['eventEnd']);
+  $agesArray = [];
+  $typesArray = [];
+  foreach($valArray['ages'] as $age) {
+    $agesArray['value'] = $age;
+  }
+  foreach($valArray['types'] as $type) {
+    $typesArray['value'] = $type;
+  }
+  $newEventPage->set('title', $valArray['title']);
+  $newEventPage->set('field_communico_subtitle', ['value' => $valArray['subTitle']]);
+  $newEventPage->set('field_communico_shortdescription', ['value' => $valArray['shortDescription']]);
+  $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
+  $newEventPage->set('field_communico_age_group', $agesArray);
+  $newEventPage->set('field_communico_event_id', ['value' => $valArray['eventId']]);
+  $newEventPage->set('field_communico_event_type', $typesArray);
+  $newEventPage->set('field_communico_start_date', ['value' => $start_date]);
+  $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
+  $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
+  $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
+  $newEventPage->enforceIsNew();
+  $newEventPage->save();
+  return true;
+}
+
+/**
+ * @param $success
+ * @param $results
+ * @param $operations
+ * @return void
+ *
+ */
+function communicoPlusFinished($success, $results, $operations) {
+  if ($success) {
+    $message = t('All events imported successfully.');
+  }
+  else {
+    $message = t('Finished with an error.');
+  }
+  \Drupal::messenger()->addStatus($message);
 }
 
 /**

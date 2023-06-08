@@ -150,16 +150,20 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
       $end_date = date('Y-m-d', strtotime('last day of +1 month'));
       $limit = 500;
       $events = $this->connector->getEventsFeed($start_date, $end_date, $type, $age, $location, $limit);
+      $batch = [
+        'title' => $this->t('Importing Events...'),
+        'operations' => [],
+        'init_message' => $this->t('Initializing...'),
+        'progress_message' => $this->t('Processed @current out of @total.'),
+        'error_message' => $this->t('An error occurred during processing'),
+        'finished' => 'communicoPlusFinished',
+      ];
       foreach ($events as $event) {
-        if(!$this->utilityService->checkEventExists($event['eventId'])) {
-          try {
-            $this->utilityService->createEventPageNode($event);
-          } catch (Exception $e) {
-            $this->loggerFactory->get('communico_plus')
-              ->error('Function createEventPageNode() returned - ' . $e);
-          }
+        if (!$this->utilityService->checkEventExists($event['eventId'])) {
+          $batch['operations'][] = ['createEventPageNode', [$event]];
         }
       }
+      batch_set($batch);
     }
     parent::submitForm($form, $form_state);
   }
