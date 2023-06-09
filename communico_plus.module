@@ -22,7 +22,7 @@ function communico_plus_theme_suggestions_alter(array &$suggestions, array $vari
  */
 function communico_plus_theme_suggestions_block_alter(array &$suggestions, array $variables) {
   $content = $variables['elements']['content'];
-  if (isset($content['#block_content']) && $content['#block_content'] instanceof Drupal\block_content\BlockContentInterface) {
+  if (isset($content['#block_content']) && $content['#block_content'] instanceof \Drupal\block_content\BlockContentInterface) {
     $suggestions[] = 'block__' . $content['#block_content']->bundle();
   }
 }
@@ -88,9 +88,8 @@ function communico_plus_theme($existing, $type, $theme, $path) {
  * @return void
  */
 function communico_plus_cron() {
-  $entityTypeManager = Drupal::service('entity_type.manager')->getStorage('node');
-  $utilityService = Drupal::service('communico_plus.utilities');
-  #$entityTypeManager->getStorage('node');
+  $entityTypeManager = \Drupal::service('entity_type.manager')->getStorage('node');
+  $utilityService = \Drupal::service('communico_plus.utilities');
   $eventNids = $entityTypeManager->getQuery()
     ->condition('type', 'event_page')
     ->condition('status', '1')
@@ -111,7 +110,7 @@ function communico_plus_cron() {
  */
 function communicoPlusGetTypesArray() {
   $dropdownArray = [];
-  $connector = Drupal::service('communico_plus.connector');
+  $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getEventTypes();
   foreach($return['data']['entries'] as $index => $name) {
     $dropdownArray[$index] = $name['name'];
@@ -125,7 +124,7 @@ function communicoPlusGetTypesArray() {
  */
 function communicoPlusGetLocationArray() {
   $dropdownArray = [];
-  $connector = Drupal::service('communico_plus.connector');
+  $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getLibraryLocations();
   foreach($return['data']['entries'] as $name) {
     $dropdownArray[$name['id']] = $name['name'];
@@ -135,7 +134,7 @@ function communicoPlusGetLocationArray() {
 
 function communicoPlusGetAgegroupsArray() {
   $dropdownArray = [];
-  $connector = Drupal::service('communico_plus.connector');
+  $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getEventAgeGroups();
   foreach($return['data']['entries'] as $index => $group) {
     $dropdownArray[$index] = $group;
@@ -148,7 +147,7 @@ function communicoPlusGetAgegroupsArray() {
  * Inserts data into database tables for dropdowns
  */
 function communicoPlusBuildDropdownTables() {
-  $connection = Drupal::database();
+  $connection = \Drupal::database();
   $connection->truncate('communico_types')->execute();
   $connection->truncate('communico_locations')->execute();
   $connection->truncate('communico_ages')->execute();
@@ -186,8 +185,8 @@ function communicoPlusBuildDropdownTables() {
  * @throws \Drupal\Core\Entity\EntityStorageException
  */
 function createEventPageNode($valArray) {
-  $entityTypeManager = Drupal::service('entity_type.manager');
-  $utilityService = Drupal::service('communico_plus.utilities');
+  $entityTypeManager = \Drupal::service('entity_type.manager');
+  $utilityService = \Drupal::service('communico_plus.utilities');
   $newEventPage = $entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
   $start_date = $utilityService->findDateFromDatestring($valArray['eventStart']);
   $end_date = $utilityService->findDateFromDatestring($valArray['eventEnd']);
