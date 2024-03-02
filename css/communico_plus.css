@@ -59,8 +59,6 @@
 }
 
 .section-image {
-  width:125px;
-  height:125px;
   border:1px solid black;
   display:flex;
   float:left;
@@ -87,8 +85,6 @@
 }
 
 .section-image {
-  width: 130px;
-  height: 130px;
   overflow: hidden;
 }
 

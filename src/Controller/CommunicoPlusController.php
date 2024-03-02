@@ -7,63 +7,62 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Image\ImageFactory;
-use Psr\Container\NotFoundExceptionInterface;
 use Drupal\communico_plus\Service\UtilityService;
 
 
 class CommunicoPlusController extends ControllerBase {
 
   /**
-   * @var ConnectorService $connector
+   * Communico connector service.
+   *
+   * @var \Drupal\communico_plus\Service\ConnectorService
    */
   protected ConnectorService $connector;
 
   /**
-   * @param ConfigFactoryInterface $config
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
 
   /**
-   * @param ModuleHandlerInterface $moduleHandler
-   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
   /**
    * The file system service.
    *
-   * @var FileSystemInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
   protected FileSystemInterface $fileSystem;
 
   /**
-   * @var MessengerInterface $messengerInterface
+   * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
 
   /**
    * The date formatter service.
    *
-   * @var DateFormatterInterface
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
   protected DateFormatterInterface $dateFormatter;
 
   /**
    * The image factory.
    *
-   * @var ImageFactory
+   * @var \Drupal\Core\Image\ImageFactory
    */
   protected ImageFactory $imageFactory;
 
   /**
-   * @var UtilityService $utilityService
+   * @var \Drupal\communico_plus\Service\UtilityService
    */
   protected UtilityService $utilityService;
 
@@ -99,10 +98,9 @@ class CommunicoPlusController extends ControllerBase {
   }
 
   /**
-   * @param ContainerInterface $container
-   * @return CommunicoPlusController|static
-   * @throws ContainerExceptionInterface
-   * @throws NotFoundExceptionInterface
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *
+   * @return \Drupal\communico_plus\Controller\CommunicoPlusController|static
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -165,7 +163,7 @@ class CommunicoPlusController extends ControllerBase {
     $var .= '<br>';
 
     $registrationUrl = $event['data']['eventRegistrationUrl'];
-    if($registrationUrl != NULL || $registrationUrl != '') {
+    if($registrationUrl != NULL) {
       $regUrl = Url::fromUri($registrationUrl)->toString();
       $var .= '<div class="c-feature">';
       $var .= '<a href="'.$regUrl.'" target="_new">';
@@ -187,7 +185,7 @@ class CommunicoPlusController extends ControllerBase {
         ],
       ],
       '#markup' => $var,
-      'one_image' => $this->utilityService->createEventImage($imageUrl, $eventId),
+      'one_image' => $this->utilityService->createControllerDisplayImage($imageUrl, $eventId),
     ];
     return $return;
   }

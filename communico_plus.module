@@ -91,6 +91,7 @@ function communico_plus_cron() {
   $entityTypeManager = \Drupal::service('entity_type.manager')->getStorage('node');
   $utilityService = \Drupal::service('communico_plus.utilities');
   $eventNids = $entityTypeManager->getQuery()
+    ->accessCheck(FALSE)
     ->condition('type', 'event_page')
     ->condition('status', '1')
     ->execute();

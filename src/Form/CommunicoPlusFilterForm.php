@@ -16,8 +16,10 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactory;
+use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\UtilityService;
+use Drupal\Core\Utility\Error;
 use Exception;
 use InvalidArgumentException;
 use Psr\Container\ContainerExceptionInterface;
@@ -74,6 +76,13 @@ class CommunicoPlusFilterForm extends FormBase {
   protected RendererInterface $renderer;
 
   /**
+   * Page cache kill switch.
+   *
+   * @var KillSwitch
+   */
+  protected KillSwitch $killSwitch;
+
+  /**
    * @param ConfigFactoryInterface $configFactory
    * @param UtilityService $utility_service
    * @param LoggerChannelFactory $logger_factory
@@ -82,6 +91,7 @@ class CommunicoPlusFilterForm extends FormBase {
    * @param RequestStack $requestStack
    * @param ModuleHandlerInterface $module_handler
    * @param RendererInterface $renderer
+   * @param KillSwitch $kill_switch
    */
   public function __construct(
     ConfigFactoryInterface $configFactory,
@@ -91,7 +101,8 @@ class CommunicoPlusFilterForm extends FormBase {
     Connection $connection,
     RequestStack $requestStack,
     ModuleHandlerInterface $module_handler,
-    RendererInterface $renderer) {
+    RendererInterface $renderer,
+    KillSwitch $kill_switch) {
     $this->config = $configFactory;
     $this->utilityService = $utility_service;
     $this->loggerFactory = $logger_factory;
@@ -100,6 +111,7 @@ class CommunicoPlusFilterForm extends FormBase {
     $this->requestStack = $requestStack;
     $this->moduleHandler = $module_handler;
     $this->renderer = $renderer;
+    $this->killSwitch = $kill_switch;
   }
 
   /**
@@ -120,6 +132,7 @@ class CommunicoPlusFilterForm extends FormBase {
       $container->get('request_stack'),
       $container->get('module_handler'),
       $container->get('renderer'),
+      $container->get('page_cache_kill_switch'),
     );
   }
 
@@ -266,6 +279,7 @@ class CommunicoPlusFilterForm extends FormBase {
    * @throws Exception
    */
   public function createWall($events = NULL) {
+    $this->killSwitch->trigger();
     $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     $return = '';
     foreach ($events as $event) {
@@ -276,7 +290,8 @@ class CommunicoPlusFilterForm extends FormBase {
         $url = Url::fromUri(ltrim($full_link));
         $link = Link::fromTextAndUrl($event['title'], $url)->toString();
       } catch (InvalidArgumentException $e) {
-        watchdog_exception('communico_plus', $e);
+        $logger = \Drupal::logger('error');
+        Error::logException($logger, $e, 'communico_plus');
       }
       $startTime = $this->utilityService->findHoursFromDatestring($event['eventStart']);
       $endTime = $this->utilityService->findHoursFromDatestring($event['eventEnd']);
@@ -344,7 +359,8 @@ class CommunicoPlusFilterForm extends FormBase {
           $var .= '</a>';
           $var .= '</div>';
         } catch (InvalidArgumentException $e) {
-          watchdog_exception('communico_plus', $e);
+          $logger = \Drupal::logger('error');
+          Error::logException($logger, $e, 'communico_plus');
         }
       }
       $var .= '</div>'; /* END .block-section */

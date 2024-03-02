@@ -5,6 +5,8 @@
  */
 namespace Drupal\communico_plus\Service;
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
@@ -128,8 +130,7 @@ class UtilityService {
     $dateObject = new DrupalDateTime($dateString);
     $timestamp = $dateObject->getTimestamp();
     $formatted = $this->dateFormatter->format($timestamp, $type, '');
-    $cleanDate = substr($formatted, 0, strpos($formatted, " -"));
-    return $cleanDate;
+    return substr($formatted, 0, strpos($formatted, " -"));
   }
 
   /**
@@ -149,14 +150,12 @@ class UtilityService {
   }
 
   /**
-   * @param null $dateString
+   * @param $dateString
    * @return string
-   *
    */
-  public function findHoursFromDatestring($dateString = NULL) {
+  public function findHoursFromDatestring($dateString) {
     $time = new DrupalDateTime($dateString);
-    $time = $time->format('g:i A');
-    return $time;
+    return $time->format('g:i A');
   }
 
   /**
@@ -164,10 +163,9 @@ class UtilityService {
    * @return string
    *
    */
-  public function findDateFromDatestring($dateString = NULL) {
+  public function findDateFromDatestring($dateString) {
     $time = new DrupalDateTime($dateString);
-    $date = $time->format('Y-m-d');
-    return $date;
+    return $time->format('Y-m-d');
   }
 
   /**
@@ -178,6 +176,10 @@ class UtilityService {
    * @TODO get rid of built up images periodically
    */
   public function createEventImage($imageUrl, $eventId) {
+    $imageStyle = $this->config->get('communico_plus.settings')->get('image_styles');
+    if(!$imageStyle) {
+      $imageStyle = 'medium';
+    }
     $image_render_array = FALSE;
     $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath().'/event_images';
     if (!$this->fileSystem->prepareDirectory($path)) {
@@ -194,7 +196,7 @@ class UtilityService {
             '#theme' => 'image_style',
             '#width' => $image->getWidth(),
             '#height' => $image->getHeight(),
-            '#style_name' => 'medium',
+            '#style_name' => $imageStyle,
             '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
           ];
         }
@@ -208,7 +210,7 @@ class UtilityService {
             '#theme' => 'image_style',
             '#width' => $image->getWidth(),
             '#height' => $image->getHeight(),
-            '#style_name' => 'medium',
+            '#style_name' => $imageStyle,
             '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
           ];
         }
@@ -216,6 +218,51 @@ class UtilityService {
     }
     return $image_render_array;
   }
+
+  public function createControllerDisplayImage($imageUrl, $eventId) {
+    $imageStyle = $this->config->get('communico_plus.settings')->get('page_styles');
+    if(!$imageStyle) {
+      $imageStyle = 'medium';
+    }
+    $image_render_array = FALSE;
+    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath().'/event_images';
+    if (!$this->fileSystem->prepareDirectory($path)) {
+      $this->fileSystem->mkdir($path);
+    }
+    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
+    if($ext != NULL && $ext != '') {
+      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
+      /* check if the image already exists */
+      if(file_exists($file_path_physical)) {
+        $image = $this->imageFactory->get($file_path_physical);
+        if ($image->isValid()) {
+          $image_render_array = [
+            '#theme' => 'image_style',
+            '#width' => $image->getWidth(),
+            '#height' => $image->getHeight(),
+            '#style_name' => $imageStyle,
+            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
+          ];
+        }
+      } else {
+        /* save to fs */
+        $fileOb = file_get_contents($imageUrl);
+        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, true);
+        $image = $this->imageFactory->get($savedFile);
+        if ($image->isValid()) {
+          $image_render_array = [
+            '#theme' => 'image_style',
+            '#width' => $image->getWidth(),
+            '#height' => $image->getHeight(),
+            '#style_name' => $imageStyle,
+            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
+          ];
+        }
+      }
+    }
+    return $image_render_array;
+  }
+
 
   /**
    * @param $eventEndDate
@@ -284,9 +331,23 @@ class UtilityService {
   }
 
   /**
-   * @param $timestamp
+   * @return array
+   * @throws InvalidPluginDefinitionException
+   * @throws PluginNotFoundException
+   */
+  public function imageStylesDropdown() {
+    $dropdownArray = [];
+    $imageStyleStorage = $this->entityTypeManager->getStorage('image_style');
+    $styleObjectArray = $imageStyleStorage->loadMultiple();
+    foreach ($styleObjectArray as $key => $value) {
+      $dropdownArray[$key] = $value->get('label');
+    }
+    return $dropdownArray;
+  }
+
+  /**
+   * @param $eventId
    * @return false|mixed
-   *
    */
   public function checkEventExists($eventId) {
     $idString = $this->database->select('node__field_communico_event_id', 'n')

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Contains \Drupal\communico_plus\Service\ConnectorService.
@@ -7,7 +8,9 @@ namespace Drupal\communico_plus\Service;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Utility\Error;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -23,7 +26,7 @@ use Psr\Container\NotFoundExceptionInterface;
 class ConnectorService {
 
   /**
-   * @var ClientInterface $httpClient
+   * @var ClientInterface
    */
   private ClientInterface $httpClient;
 
@@ -42,7 +45,7 @@ class ConnectorService {
  private State $state;
 
   /**
-    * Messenger service.
+    * Drupal logger channel factory service.
     *
     * @var LoggerChannelFactory $loggerFactory
     */
@@ -83,7 +86,8 @@ class ConnectorService {
   }
 
   /**
-   * Retrieve auth-token based on provided info.
+   * @return void
+   * @throws GuzzleException
    */
   public function getAuthToken() {
     $auth_header = $this->getAuthHeaders();
@@ -101,7 +105,6 @@ class ConnectorService {
 
   /**
    * @return bool
-   * Check if authtoken is valid or expired.
    */
   public function isAuthTokenValid() {
     $current_time = time();
@@ -114,13 +117,14 @@ class ConnectorService {
    * @param $eventId
    * @return false|mixed
    *
+   * @throws GuzzleException
    */
   public function getEvent($eventId) {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -132,22 +136,22 @@ class ConnectorService {
     $params = ['fields' => 'eventRegistrationUrl,eventType,eventImage,ages,externalVenueName,types,eventRegistrationUrl'];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/events/'.$eventId;
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @param $reservationId
    * @return false|mixed
    * gets reservation info from a reservation id
+   * @throws GuzzleException
    */
   public function getReservation($reservationId) {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -161,14 +165,14 @@ class ConnectorService {
     ];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/reserve/reservations/'.$reservationId;
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * gets a list of registrations
+   * @throws GuzzleException
    */
   public function getAllReservations($start = FALSE, $limit = FALSE) {
     if (!$start) {
@@ -177,11 +181,11 @@ class ConnectorService {
     if(!$limit) {
       $limit = '100';
     }
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -197,21 +201,21 @@ class ConnectorService {
     ];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/reserve/reservations';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * Gets all room data defined in Communico
+   * @throws GuzzleException
    */
   public function getAllRoomNames() {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -223,21 +227,21 @@ class ConnectorService {
     $params = [];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/reserve/rooms';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * Gets all event types defined in Communico
+   * @throws GuzzleException
    */
   public function getEventTypes() {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -249,21 +253,21 @@ class ConnectorService {
     $params = [];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/types';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * Gets all event age groups defined in Communico
+   * @throws GuzzleException
    */
   public function getEventAgeGroups() {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -275,21 +279,21 @@ class ConnectorService {
     $params = [];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/ages';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * Gets all age groups defined in Communico
+   * @throws GuzzleException
    */
   public function getAgeGroups() {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -301,21 +305,21 @@ class ConnectorService {
     $params = [];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/ages';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
 
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
    * @return false|mixed
    * Gets all library locations defined in Communico
+   * @throws GuzzleException
    */
   public function getLibraryLocations() {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -331,8 +335,7 @@ class ConnectorService {
     ];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/client/locations';
-    $data = $this->getFromCommunico($url, $params, $request_headers);
-    return $data;
+    return $this->getFromCommunico($url, $params, $request_headers);
   }
 
   /**
@@ -344,13 +347,14 @@ class ConnectorService {
    * @param $limit
    * @return mixed
    *
+   * @throws GuzzleException
    */
   public function getEventsFeed($start_date, $end_date, $type, $age, $location, $limit) {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -388,13 +392,14 @@ class ConnectorService {
    * @return mixed
    * Retrieve feed from Communico.
    * @TODO return location from this request for filtering
+   * @throws GuzzleException
    */
   public function getFeed($start_date, $end_date, $type, $limit) {
-    if ($this->isAuthTokenValid() == FALSE) {
+    if (!$this->isAuthTokenValid()) {
       $this->getAuthToken();
     }
     $token = $this->state->get('communico_plus.authHeader');
-    if ($token == FALSE) {
+    if (!$token) {
       $this->getAuthToken();
       $token = $this->state->get('communico_plus.authHeader');
     }
@@ -416,11 +421,10 @@ class ConnectorService {
     $data = $this->getFromCommunico($url, $params, $request_headers);
     $next_fetch = $this->state->get('communico_plus.nextFetch');
     /* If data is null or cached rely on cache data. */
-    if ($data == NULL || $data == FALSE || $next_fetch > time()) {
+    if (!$data || $next_fetch > time()) {
       $data = $this->state->get('communico_plus.dataCache');
-      $data = unserialize($data);
 
-      return $data;
+      return unserialize($data);
     }
     /* Fetch and set both the cache and next fetch timestamp. */
     $serialized = serialize($data['data']['entries']);
@@ -433,9 +437,9 @@ class ConnectorService {
   /**
    * @param $url
    * @param $headers
-   * @param null $body
+   * @param $body
    * @return false|mixed
-   * POST request to communico.
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   protected function postToCommunico($url, $headers, $body = NULL) {
     $return = FALSE;
@@ -447,13 +451,15 @@ class ConnectorService {
       $status = $response->getStatusCode();
       if($status == '200') {
         $data = $response->getBody()->getContents();
-      } else {
+      }
+      else {
         $this->loggerFactory->get('communico_plus')
           ->warning('postToCommunico() returned a status '.$status. ' with the response '.$response->getBody()
               ->getContents());
       }
     } catch (RequestException $e) {
-      watchdog_exception('communico_plus postToCommunico()', $e);
+      $logger = \Drupal::logger('error');
+      Error::logException($logger, $e, 'communico_plus POST To Communico()');
     }
     if ($data) {
       $return = Json::decode($data);
@@ -466,7 +472,7 @@ class ConnectorService {
    * @param $params
    * @param $headers
    * @return false|mixed
-   * GET request to Communico.
+   * @throws GuzzleException
    */
   protected function getFromCommunico($url, $params, $headers) {
     $return = FALSE;
@@ -485,7 +491,8 @@ class ConnectorService {
               ->getContents());
       }
     } catch (RequestException $e) {
-      watchdog_exception('communico_plus getFromCommunico()', $e);
+      $logger = \Drupal::logger('error');
+      Error::logException($logger, $e, 'communico_plus getFromCommunico()');
     }
     if ($data) {
         $return = Json::decode($data);

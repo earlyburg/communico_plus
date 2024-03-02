@@ -2,11 +2,12 @@
 
 namespace Drupal\communico_plus\Plugin\Block;
 
+use Drupal\Core\Block\Annotation\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Psr\Container\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a Communico Filter Block.
@@ -19,8 +20,8 @@ use Psr\Container\ContainerInterface;
 class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
   /**
-   *
-   * @var FormBuilderInterface
+   * @var \Drupal\Core\Form\FormBuilderInterface
+   *   The Drupal form builder interface.
    */
   protected FormBuilderInterface $formBuilder;
 
@@ -45,6 +46,7 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
    * @param array $configuration
    * @param $plugin_id
    * @param $plugin_definition
+   *
    * @return CommunicoPlusFilterBlock|static
    *
    */
@@ -53,7 +55,7 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('form_builder')
+      $container->get('form_builder'),
     );
   }
 

@@ -9,6 +9,8 @@ namespace Drupal\communico_plus\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\communico_plus\Service\UtilityService;
 
 class CommunicoPlusConfigForm extends ConfigFormBase {
 
@@ -18,6 +20,28 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    * @var string
    */
   const COMMUNICO_PLUS_SETTINGS = 'communico_plus.settings';
+
+  /**
+   * @var UtilityService
+   */
+private UtilityService $utilityService;
+
+
+  /**
+   * @param UtilityService $utility_service
+   */
+  public function __construct(UtilityService $utility_service) {
+    $this->utilityService = $utility_service;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('communico_plus.utilities')
+    );
+  }
 
   /**
    * @return string
@@ -44,49 +68,79 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::COMMUNICO_PLUS_SETTINGS);
+    $form['api'] = [
+      '#type' => 'details',
+      '#title' => $this
+        ->t('API'),
+      '#open' => TRUE,
+    ];
 
-    $form['access_key'] = array(
+    $form['api']['access_key'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Access Key'),
       '#default_value' => $config->get('access_key'),
       '#required' => TRUE,
     );
 
-    $form['secret_key'] = array(
+    $form['api']['secret_key'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Secret Key'),
       '#default_value' => $config->get('secret_key'),
       '#required' => TRUE,
     );
 
-    $form['url'] = array(
+    $form['api']['url'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Communico API URL'),
       '#default_value' => $config->get('url'),
       '#required' => TRUE,
     );
 
-    $form['linkurl'] = array(
+    $form['api']['linkurl'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Communico Public URL'),
       '#default_value' => $config->get('linkurl'),
       '#required' => TRUE,
     );
 
-    $form['display_calendar'] = [
-      '#type' => 'checkbox',
-      '#title' => 'Display the option to select a calendar view of events.',
-      '#default_value' => $config->get('display_calendar'),
-    ];
-
     $valid = $config->get('secret_key');
     if($valid != NULL &&  $valid != '') {
-      $form['rebuild_drops'] = [
+      $form['api']['rebuild_drops'] = [
         '#type' => 'checkbox',
         '#title' => 'Rebuild the filter block select element values:',
         '#default_value' => $form_state->getValue('rebuild_drops'),
       ];
     }
+
+    $form['ux'] = [
+      '#type' => 'details',
+      '#title' => $this
+        ->t('User Interface'),
+      '#open' => TRUE,
+    ];
+
+    $form['ux']['display_calendar'] = [
+      '#type' => 'checkbox',
+      '#title' => 'Display the option to select a calendar view of events.',
+      '#default_value' => $config->get('display_calendar'),
+    ];
+
+    $form['ux']['image_styles'] = [
+      '#type' => 'select',
+      '#title' => 'Choose the image style for the block image display:',
+      '#options' => $this->utilityService->imageStylesDropdown(),
+      '#empty_option' => $this->t('Image Style'),
+      '#default_value' => $config->get('image_styles'),
+    ];
+
+    $form['ux']['page_styles'] = [
+      '#type' => 'select',
+      '#title' => 'Choose the image style for the event page image display:',
+      '#options' => $this->utilityService->imageStylesDropdown(),
+      '#empty_option' => $this->t('Event Page Image Style'),
+      '#default_value' => $config->get('page_styles'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -114,6 +168,8 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
       ->set('url', $form_state->getValue('url'))
       ->set('linkurl', $form_state->getValue('linkurl'))
       ->set('display_calendar', $form_state->getValue('display_calendar'))
+      ->set('image_styles', $form_state->getValue('image_styles'))
+      ->set('page_styles', $form_state->getValue('page_styles'))
       ->save();
     parent::submitForm($form, $form_state);
   }
