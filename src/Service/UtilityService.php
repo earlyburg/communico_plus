@@ -11,6 +11,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\StreamWrapper\PublicStream;
@@ -30,14 +31,14 @@ class UtilityService {
   /**
    * The config factory interface.
    *
-   * @var ConfigFactoryInterface $config
+   * @var ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
 
   /**
     * Messenger service.
     *
-    * @var LoggerChannelFactory $loggerFactory
+    * @var LoggerChannelFactory
     */
  protected LoggerChannelFactory $loggerFactory;
 
@@ -63,14 +64,14 @@ class UtilityService {
   protected ImageFactory $imageFactory;
 
   /**
-   * @var Connection $connection
+   * @var Connection
    */
   protected Connection $database;
 
   /**
    * The entity type manager.
    *
-   * @var EntityTypeManagerInterface $entity_manager
+   * @var EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 
@@ -189,7 +190,7 @@ class UtilityService {
     if($ext != NULL && $ext != '') {
       $file_path_physical = $path . '/' . $eventId . '.' . $ext;
       /* check if the image already exists */
-      if(file_exists($file_path_physical)) {
+      if (file_exists($file_path_physical)) {
         $image = $this->imageFactory->get($file_path_physical);
         if ($image->isValid()) {
           $image_render_array = [
@@ -200,7 +201,8 @@ class UtilityService {
             '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
           ];
         }
-      } else {
+      }
+      else {
         /* save to fs */
         $fileOb = file_get_contents($imageUrl);
         $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, true);
@@ -233,7 +235,7 @@ class UtilityService {
     if($ext != NULL && $ext != '') {
       $file_path_physical = $path . '/' . $eventId . '.' . $ext;
       /* check if the image already exists */
-      if(file_exists($file_path_physical)) {
+      if (file_exists($file_path_physical)) {
         $image = $this->imageFactory->get($file_path_physical);
         if ($image->isValid()) {
           $image_render_array = [
@@ -244,7 +246,8 @@ class UtilityService {
             '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
           ];
         }
-      } else {
+      }
+      else {
         /* save to fs */
         $fileOb = file_get_contents($imageUrl);
         $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, true);
@@ -366,8 +369,8 @@ class UtilityService {
    */
   public function checkLocationExists($locationId) {
     $idString = $this->database->select('node__field_communico_location_id', 'n')
-      ->fields('n', ['field_communico_location_id_value 	'])
-      ->condition('n.field_communico_location_id_value 	', $locationId, '=')
+      ->fields('n', ['field_communico_location_id_value'])
+      ->condition('n.field_communico_location_id_value', $locationId, '=')
       ->execute()
       ->fetchField();
     ($idString) ? $return = TRUE : $return = FALSE;
@@ -476,5 +479,40 @@ class UtilityService {
     }
     return substr($newLocationString, 0, -1);
   }
+
+  /**
+   * @throws EntityStorageException
+   * @throws InvalidPluginDefinitionException
+   * @throws PluginNotFoundException
+   */
+  public function createEventNode($valArray) {
+    $newEventPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+    $start_date = $this->findDateFromDatestring($valArray['eventStart']);
+    $end_date = $this->findDateFromDatestring($valArray['eventEnd']);
+    $agesArray = [];
+    $typesArray = [];
+    foreach($valArray['ages'] as $age) {
+      $agesArray['value'] = $age;
+    }
+    foreach($valArray['types'] as $type) {
+      $typesArray['value'] = $type;
+    }
+    $newEventPage->set('title', $valArray['title']);
+    $newEventPage->set('field_communico_subtitle', ['value' => $valArray['subTitle']]);
+    $newEventPage->set('field_communico_shortdescription', ['value' => $valArray['shortDescription']]);
+    $newEventPage->set('body', ['value' => $valArray['description'], 'format' => 'basic_html']);
+    $newEventPage->set('field_communico_age_group', $agesArray);
+    $newEventPage->set('field_communico_event_id', ['value' => $valArray['eventId']]);
+    $newEventPage->set('field_communico_event_type', $typesArray);
+    $newEventPage->set('field_communico_start_date', ['value' => $start_date]);
+    $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
+    $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
+    $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
+    $newEventPage->enforceIsNew();
+    $newEventPage->save();
+    return true;
+
+  }
+
 
 }

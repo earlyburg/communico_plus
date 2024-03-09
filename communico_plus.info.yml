@@ -3,5 +3,7 @@ description: Enables Communico events integration in Drupal
 package: Communico
 type: module
 core_version_requirement: ^8 || ^9 || ^10
+dependencies:
+  - 'queue_ui:queue_ui'
 
 

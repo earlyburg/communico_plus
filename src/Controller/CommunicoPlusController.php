@@ -10,11 +10,10 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
+use Drupal\communico_plus\Service\UtilityService;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Image\ImageFactory;
-use Drupal\communico_plus\Service\UtilityService;
-
 
 class CommunicoPlusController extends ControllerBase {
 

@@ -1,5 +1,6 @@
 <?php
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 
@@ -90,6 +91,8 @@ function communico_plus_theme($existing, $type, $theme, $path) {
 function communico_plus_cron() {
   $entityTypeManager = \Drupal::service('entity_type.manager')->getStorage('node');
   $utilityService = \Drupal::service('communico_plus.utilities');
+  $queueFactory = \Drupal::service('queue');
+  $eventSyncQueue = $queueFactory->get('communico_event_sync_queue');
   $eventNids = $entityTypeManager->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'event_page')
@@ -102,6 +105,19 @@ function communico_plus_cron() {
       $node->save();
     }
     $entityTypeManager->resetCache([$id]);
+  }
+  // get the libraries we are storing
+  foreach($utilityService->locationDropdown() as $locationId => $nameString) {
+    // If we are storing nodes with this location already, create queue item.
+    if ($utilityService->checkLocationExists($locationId)) {
+          // Create queue item.
+          $item = new \stdClass();
+          $item->startDate = date('Y-m-d');
+          $item->endDate = date('Y-m-d', strtotime('last day of +1 month'));
+          $item->locationId = $locationId;
+          $eventSyncQueue->createItem($item);
+
+    }
   }
 }
 
