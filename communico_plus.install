@@ -34,6 +34,7 @@ function communico_plus_schema() {
     'unique keys' => [
     'location_id' => ['location_id'],
     ],
+    'primary key' => ['location_id'],
   ];
   $schema['communico_types'] = [
     'description' => 'Storage for Communico Plus event types dropdown form element data.',
@@ -54,6 +55,7 @@ function communico_plus_schema() {
     'unique keys' => [
       'number' => ['number'],
     ],
+    'primary key' => ['number'],
   ];
   $schema['communico_ages'] = [
     'description' => 'Storage for Communico Plus event age groups dropdown form element data.',
@@ -74,6 +76,7 @@ function communico_plus_schema() {
     'unique keys' => [
       'number' => ['number'],
     ],
+    'primary key' => ['number'],
   ];
   return $schema;
 }

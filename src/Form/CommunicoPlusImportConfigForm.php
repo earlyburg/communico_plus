@@ -36,13 +36,6 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   protected $loggerFactory;
 
   /**
-   * Drupal config factory interface.
-   *
-   * @var ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
    * The entity type manager.
    *
    * @var EntityTypeManagerInterface
@@ -59,20 +52,18 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   /**
    * @param UtilityService $utility_service
    * @param ConnectorService $communico_plus_connector
-   * @param ConfigFactoryInterface $config_factory
+   * @param LoggerChannelFactory $logger_factory
    * @param EntityTypeManagerInterface $entity_manager
    */
   public function __construct(
     UtilityService $utility_service,
     ConnectorService $communico_plus_connector,
     LoggerChannelFactory $logger_factory,
-    ConfigFactoryInterface $config_factory,
     EntityTypeManagerInterface $entity_manager) {
     $this->utilityService = $utility_service;
     $this->connector = $communico_plus_connector;
     $this->loggerFactory = $logger_factory;
     $this->entityTypeManager = $entity_manager;
-    parent::__construct($config_factory);
   }
 
   /**
@@ -87,7 +78,6 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
       $container->get('communico_plus.utilities'),
       $container->get('communico_plus.connector'),
       $container->get('logger.factory'),
-      $container->get('config.factory'),
       $container->get('entity_type.manager'),
     );
   }
@@ -116,7 +106,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
    *
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-
+    $config = $this->config(static::COMMUNICO_PLUS_IMPORT_SETTINGS);
     $form['imports'] = [
       '#type' => 'details',
       '#title' => $this
@@ -152,14 +142,25 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
       '#open' => TRUE,
     ];
 
-    $form['manage']['delete_unpublished'] = [
-      '#type' => 'checkbox',
-      '#title' => 'Delete all unpublished Event nodes:',
-      '#default_value' => $form_state->getValue('delete_unpublished'),
+    $updateText = '<div><i><b>The following locations can have new events automatically imported.</b></i></div>';
+    foreach($currentLibraries as $library) {
+      $updateText .= '<div>' . $library . '</div>';
+    }
+    $form['manage']['update_information'] = [
+      '#markup' => $updateText,
     ];
 
+    $form['manage']['auto_update_events'] = [
+      '#type' => 'checkbox',
+      '#title' => 'Download and save events automatically when Drupal Cron runs.',
+      '#default_value' => $config->get('auto_update_events'),
+    ];
 
-
+    $form['manage']['delete_unpublished'] = [
+      '#type' => 'checkbox',
+      '#title' => 'Delete all unpublished Event nodes automatically when Drupal Cron runs.',
+      '#default_value' => $config->get('delete_unpublished'),
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -203,20 +204,10 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
       batch_set($batch);
     }
 
-
-    if ($form_state->getValue('delete_unpublished') == '1') {
-      $nodeStorage = $this->entityTypeManager->getStorage('node');
-      $eventNids = $nodeStorage->getQuery()
-        ->accessCheck(FALSE)
-        ->condition('type', 'event_page')
-        ->condition('status', '0')
-        ->execute();
-      foreach($eventNids as $id) {
-        $node = $nodeStorage->load($id);
-        $node->delete();
-      }
-    }
-
+    $this->config(static::COMMUNICO_PLUS_IMPORT_SETTINGS)
+      ->set('auto_update_events', $form_state->getValue('auto_update_events'))
+      ->set('delete_unpublished', $form_state->getValue('delete_unpublished'))
+      ->save();
     parent::submitForm($form, $form_state);
   }
 

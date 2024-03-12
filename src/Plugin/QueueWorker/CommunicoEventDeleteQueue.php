@@ -6,37 +6,28 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Annotation\QueueWorker;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
-use Drupal\communico_plus\Service\UtilityService;
-use Drupal\communico_plus\Service\ConnectorService;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * The Communico Plus event sync queue.
+ * The Communico Plus event delete queue.
  *
  * @QueueWorker(
- *   id = "communico_event_sync_queue",
- *   title = @Translation("Communico Plus Event Sync Queue"),
+ *   id = "communico_event_delete_queue",
+ *   title = @Translation("Communico Plus Event Delete Queue"),
  *   cron = {"time" = 60}
  * )
  */
-class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   /**
-   * Communico connector service.
+   * The entity type manager.
    *
-   * @var ConnectorService
+   * @var EntityTypeManagerInterface
    */
-  protected ConnectorService $connector;
-
-  /**
-   * The communico plus utility service.
-   *
-   * @var UtilityService
-   */
-  protected UtilityService $utilityService;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The mars market type sync queue constructor.
@@ -47,19 +38,15 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
    *   The plugin id string.
    * @param string $plugin_definition
    *   The plugin definition string.
-   * @param UtilityService $utility_service
-   *   The communico utility service.
-   * @param ConnectorService $communico_plus_connector
-   *   The communico connector service.
+   * @param EntityTypeManagerInterface $entity_manager
+   *   The entity type manager.
    */
   public function __construct(
   array $configuration,
   $plugin_id,
   $plugin_definition,
-  UtilityService $utility_service,
-  ConnectorService $communico_plus_connector) {
-    $this->utilityService = $utility_service;
-    $this->connector = $communico_plus_connector;
+  EntityTypeManagerInterface $entity_manager) {
+    $this->entityTypeManager = $entity_manager;
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
 
@@ -84,8 +71,7 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('communico_plus.utilities'),
-      $container->get('communico_plus.connector'),
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -95,18 +81,17 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
    * @throws InvalidPluginDefinitionException
    * @throws PluginNotFoundException
    * @throws EntityStorageException
-   * @throws GuzzleException
+   *
+   * @returns void
    */
   public function processItem($item) {
     if ($item) {
-      $events = $this->connector->getEventsFeed($item->startDate, $item->endDate, NULL, NULL, $item->locationId, 500);
-      foreach ($events as $eventArray) {
-        // If this event does not already exist, create a new event node.
-        if (!$this->utilityService->checkEventExists($eventArray['eventId'])) {
-          $this->utilityService->createEventNode($eventArray);
-        }
+    //   \Drupal::logger('communico_plus')->debug(print_r($item->id, TRUE));
+      $nodeStorage = $this->entityTypeManager->getStorage('node');
+      $node = $nodeStorage->load($item->id);
+      if ($node->id()) {
+        $node->delete();
       }
-
     }
   }
 

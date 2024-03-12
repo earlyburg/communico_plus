@@ -152,7 +152,7 @@ private UtilityService $utilityService;
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     if($form_state->getValue('rebuild_drops') == '1') {
-      communicoPlusBuildDropdownTables();
+      $this->utilityService->buildDropdownTables();
     }
   }
 
@@ -162,7 +162,7 @@ private UtilityService $utilityService;
    *
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->configFactory->getEditable(static::COMMUNICO_PLUS_SETTINGS)
+    $this->config(static::COMMUNICO_PLUS_SETTINGS)
       ->set('access_key', $form_state->getValue('access_key'))
       ->set('secret_key', $form_state->getValue('secret_key'))
       ->set('url', $form_state->getValue('url'))

@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\StreamWrapper\PublicStream;
+use Exception;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
@@ -514,5 +515,39 @@ class UtilityService {
 
   }
 
+  /**
+   * @return void
+   * @throws Exception
+   */
+  public function buildDropdownTables() {
+
+    $this->database->truncate('communico_types')->execute();
+    $this->database->truncate('communico_locations')->execute();
+    $this->database->truncate('communico_ages')->execute();
+    $typesArray = communicoPlusGetTypesArray();
+    foreach ($typesArray as $index => $value) {
+      $entry = [
+        'number' => $index,
+        'descr' => $value,
+      ];
+      $this->database->insert('communico_types')->fields($entry)->execute();
+    }
+    $locationArray = communicoPlusGetLocationArray();
+    foreach ($locationArray as $index => $value) {
+      $entry = [
+        'location_id' => $index,
+        'location_name' => $value,
+      ];
+      $this->database->insert('communico_locations')->fields($entry)->execute();
+    }
+    $agegroupArray = communicoPlusGetAgegroupsArray();
+    foreach ($agegroupArray as $index => $value) {
+      $entry = [
+        'number' => $index,
+        'groupname' => $value,
+      ];
+      $this->database->insert('communico_ages')->fields($entry)->execute();
+    }
+  }
 
 }

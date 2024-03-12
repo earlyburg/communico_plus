@@ -1,6 +1,5 @@
 <?php
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 
@@ -89,10 +88,15 @@ function communico_plus_theme($existing, $type, $theme, $path) {
  * @return void
  */
 function communico_plus_cron() {
+
+  $importConfig = \Drupal::config('communico_plus.import.settings');
+  $autoRemove = $importConfig->get('delete_unpublished');
+  $autoSave = $importConfig->get('auto_update_events');
+
   $entityTypeManager = \Drupal::service('entity_type.manager')->getStorage('node');
   $utilityService = \Drupal::service('communico_plus.utilities');
   $queueFactory = \Drupal::service('queue');
-  $eventSyncQueue = $queueFactory->get('communico_event_sync_queue');
+  // Unpublish expired events.
   $eventNids = $entityTypeManager->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'event_page')
@@ -104,21 +108,38 @@ function communico_plus_cron() {
       $node->setUnpublished();
       $node->save();
     }
-    $entityTypeManager->resetCache([$id]);
   }
-  // get the libraries we are storing
-  foreach($utilityService->locationDropdown() as $locationId => $nameString) {
-    // If we are storing nodes with this location already, create queue item.
-    if ($utilityService->checkLocationExists($locationId)) {
-          // Create queue item.
-          $item = new \stdClass();
-          $item->startDate = date('Y-m-d');
-          $item->endDate = date('Y-m-d', strtotime('last day of +1 month'));
-          $item->locationId = $locationId;
-          $eventSyncQueue->createItem($item);
-
+  if ($autoSave == 1) {
+    $eventSyncQueue = $queueFactory->get('communico_event_sync_queue');
+    // get the libraries we are storing
+    foreach ($utilityService->locationDropdown() as $locationId => $nameString) {
+      // If we are storing nodes with this location already, create queue item.
+      if ($utilityService->checkLocationExists($locationId)) {
+        // Create queue item.
+        $item = new \stdClass();
+        $item->startDate = date('Y-m-d');
+        $item->endDate = date('Y-m-d', strtotime('last day of +1 month'));
+        $item->locationId = $locationId;
+        $eventSyncQueue->createItem($item);
+      }
     }
   }
+
+  if ($autoRemove == 1) {
+    $eventDeleteQueue = $queueFactory->get('communico_event_delete_queue');
+    $expiredNids = $entityTypeManager->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'event_page')
+      ->condition('status', '0')
+      ->execute();
+    foreach ($expiredNids as $id) {
+      $item = new \stdClass();
+      $item->id = $id;
+      $eventDeleteQueue->createItem($item);
+    }
+  }
+
+
 }
 
 /**
@@ -157,41 +178,6 @@ function communicoPlusGetAgegroupsArray() {
     $dropdownArray[$index] = $group;
   }
   return $dropdownArray;
-}
-
-/**
- * @throws Exception
- * Inserts data into database tables for dropdowns
- */
-function communicoPlusBuildDropdownTables() {
-  $connection = \Drupal::database();
-  $connection->truncate('communico_types')->execute();
-  $connection->truncate('communico_locations')->execute();
-  $connection->truncate('communico_ages')->execute();
-  $typesArray = communicoPlusGetTypesArray();
-  foreach ($typesArray as $index => $value) {
-    $entry = [
-      'number' => $index,
-      'descr' => $value,
-    ];
-    $connection->insert('communico_types')->fields($entry)->execute();
-  }
-  $locationArray = communicoPlusGetLocationArray();
-  foreach ($locationArray as $index => $value) {
-    $entry = [
-      'location_id' => $index,
-      'location_name' => $value,
-    ];
-    $connection->insert('communico_locations')->fields($entry)->execute();
-  }
-  $agegroupArray = communicoPlusGetAgegroupsArray();
-  foreach ($agegroupArray as $index => $value) {
-    $entry = [
-      'number' => $index,
-      'groupname' => $value,
-    ];
-    $connection->insert('communico_ages')->fields($entry)->execute();
-  }
 }
 
 /**
@@ -240,7 +226,7 @@ function createEventPageNode($valArray) {
  */
 function communicoPlusFinished($success, $results, $operations) {
   if ($success) {
-    $message = t('All events imported successfully.');
+    $message = t('All operations completed successfully.');
   }
   else {
     $message = t('Finished with an error.');
