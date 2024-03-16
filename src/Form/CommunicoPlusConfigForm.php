@@ -9,6 +9,7 @@ namespace Drupal\communico_plus\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\communico_plus\Service\UtilityService;
 
@@ -147,7 +148,7 @@ private UtilityService $utilityService;
   /**
    * @param array $form
    * @param FormStateInterface $form_state
-   * @throws \Exception
+   * @throws Exception
    *
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {

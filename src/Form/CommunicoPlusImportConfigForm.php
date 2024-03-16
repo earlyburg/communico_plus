@@ -10,6 +10,7 @@ namespace Drupal\communico_plus\Form;
 use Drupal\communico_plus\Service\ConnectorService;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Container\ContainerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -177,6 +178,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    *
+   * @throws GuzzleException
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $formValues = $form_state->getValues();
