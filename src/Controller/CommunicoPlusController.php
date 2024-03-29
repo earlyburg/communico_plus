@@ -199,8 +199,6 @@ class CommunicoPlusController extends ControllerBase {
   public function reservation($registrationId) {
     $registration = $this->connector->getReservation($registrationId);
 
-    \Drupal::logger('communico_plus')->debug('<pre>' . print_r($registration,TRUE) . '</pre>'); //--test
-
     $branchLink = $this->config
         ->get('communico_plus.settings')
         ->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';

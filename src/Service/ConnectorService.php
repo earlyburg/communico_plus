@@ -8,7 +8,6 @@ namespace Drupal\communico_plus\Service;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Utility\Error;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -461,8 +460,8 @@ class ConnectorService {
               ->getContents());
       }
     } catch (RequestException $e) {
-      $logger = \Drupal::logger('error');
-      Error::logException($logger, $e, 'communico_plus POST To Communico()');
+      $this->loggerFactory->get('communico_plus')
+        ->error($e);
     }
     if ($data) {
       $return = Json::decode($data);
@@ -494,8 +493,8 @@ class ConnectorService {
               ->getContents());
       }
     } catch (RequestException $e) {
-      $logger = \Drupal::logger('error');
-      Error::logException($logger, $e, 'communico_plus getFromCommunico()');
+      $this->loggerFactory->get('communico_plus')
+        ->error($e);
     }
     if ($data) {
         $return = Json::decode($data);

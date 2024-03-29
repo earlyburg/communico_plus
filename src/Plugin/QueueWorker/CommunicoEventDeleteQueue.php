@@ -86,7 +86,6 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
    */
   public function processItem($item) {
     if ($item) {
-    //   \Drupal::logger('communico_plus')->debug(print_r($item->id, TRUE));
       $nodeStorage = $this->entityTypeManager->getStorage('node');
       $node = $nodeStorage->load($item->id);
       if ($node->id()) {
