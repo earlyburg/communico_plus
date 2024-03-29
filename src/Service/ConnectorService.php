@@ -133,7 +133,10 @@ class ConnectorService {
       'Accept' => 'application/json',
       'Authorization' => $token,
     ];
-    $params = ['fields' => 'eventRegistrationUrl,eventType,eventImage,ages,externalVenueName,types,eventRegistrationUrl'];
+
+    $params = [
+      'fields' => 'eventRegistrationUrl,eventType,eventImage,ages,externalVenueName,types,eventRegistrationUrl'
+    ];
     $url = $this->getCommunicoUrl();
     $url = $url . '/v3/attend/events/'.$eventId;
 

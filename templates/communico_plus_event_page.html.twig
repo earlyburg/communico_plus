@@ -1,0 +1,56 @@
+{#
+/**
+ * @file
+ * Default theme implementation to output a Communico event.
+ *
+ * Available variables:
+ *   - event_data (An array containing all event data.)
+ *   - expire_date
+ *   - branch_link
+ *   - calendar_image_path
+ *   - map_pin_image_path
+ *   - reg_url
+ *   - expired_text
+ *   - description
+ *   - one_image
+ *
+ * @ingroup themeable
+ */
+#}
+<h1 class="page-title">
+  {{ event_data.data.title }}
+</h1>
+<h2 class="node__title">
+  {{ event_data.data.subTitle }}
+</h2>
+<div class="c-feature">
+  <div class="c-iconimage">
+    <img src="{{ map_pin_image_path }}" alt="Map pin icon">
+  </div>
+    <a href = "{{ branch_link }}" target="_new">{{ event_data.data.locationName }}</a>
+</div>
+<br>
+<div class="c-feature">
+  <div class="c-iconimage"><img src="{{ calendar_image_path }}" alt="Calendar Icon"></div>
+  {{ expired_text }}
+</div>
+<br>
+<div class="c-feature">
+  <div class="c-title">Age Group:</div> {{ event_data.data.ages|join(', ') }}
+</div>
+<br>
+<div class="c-feature">
+  <div class="c-title">Event Type:</div> {{ event_data.data.types|join(', ') }}
+</div>
+<br>
+<div class="c-feature">
+<a href="{{ reg_url }}" target="_new">
+<div id="event-sub-button">Register</div>
+</a>
+</div>
+<p>
+  {{ description }}
+</p>
+{{ one_image }}
+
+

@@ -1,4 +1,8 @@
 <?php
+
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
@@ -44,42 +48,65 @@ function communico_plus_form_alter(&$form, FormStateInterface $form_state, $form
  *
  */
 function communico_plus_theme($existing, $type, $theme, $path) {
-  $variables = array(
-    'communico_plus_block' => array(
-      'variables' => array(
+  return [
+    'communico_plus_block' => [
+      'variables' => [
         'events' => NULL,
-      ),
+      ],
       'template' => 'communico_plus_block',
-    ),
-    'communico_plus_item' => array(
-      'variables' => array(
+    ],
+    'communico_plus_item' => [
+      'variables' => [
         'title_link' => NULL,
         'start_date' => NULL,
         'end_date' => NULL,
         'location' => NULL,
         'room' => NULL,
-      ),
+      ],
       'template' => 'communico_plus_item',
-    ),
-    'communico_plus_filter_block' => array(
-      'variables' => array(
+    ],
+    'communico_plus_filter_block' => [
+      'variables' => [
         'events' => NULL,
-      ),
+      ],
       'template' => 'communico_plus_filter_block',
-    ),
-    'communico_plus_filter_item' => array(
-      'variables' => array(
+    ],
+    'communico_plus_filter_item' => [
+      'variables' => [
         'filter_form' => NULL,
         'details' => NULL,
-      ),
+      ],
       'template' => 'communico_plus_filter_item',
-    ),
+    ],
     'communico_plus_filter_form' => [
       'render element' => 'children',
       'template' => 'form__communico_plus_filter_form',
     ],
-  );
-  return $variables;
+    'communico_plus_event_page' => [
+      'variables' => [
+        'event_data' => [],
+        'expire_date' => NULL,
+        'branch_link' => NULL,
+        'calendar_image_path' => NULL,
+        'map_pin_image_path' => NULL,
+        'reg_url' => NULL,
+        'expired_text' => NULL,
+        'description' => NULL,
+        'one_image' => NULL,
+      ],
+      'template' => 'communico_plus_event_page',
+    ],
+    'communico_plus_reservation_page' => [
+      'variables' => [
+        'reservation_data' => [],
+        'expire_date' => NULL,
+        'branch_link' => NULL,
+        'expired_text' => NULL,
+        'description' => NULL,
+      ],
+      'template' => 'communico_plus_reservation_page',
+    ],
+  ];
 }
 
 /**
@@ -124,7 +151,6 @@ function communico_plus_cron() {
       }
     }
   }
-
   if ($autoRemove == 1) {
     $eventDeleteQueue = $queueFactory->get('communico_event_delete_queue');
     $expiredNids = $entityTypeManager->getQuery()
@@ -138,8 +164,6 @@ function communico_plus_cron() {
       $eventDeleteQueue->createItem($item);
     }
   }
-
-
 }
 
 /**
@@ -158,7 +182,6 @@ function communicoPlusGetTypesArray() {
 
 /**
  * @return array
- *
  */
 function communicoPlusGetLocationArray() {
   $dropdownArray = [];
@@ -170,6 +193,9 @@ function communicoPlusGetLocationArray() {
   return $dropdownArray;
 }
 
+/**
+ * @return array
+ */
 function communicoPlusGetAgegroupsArray() {
   $dropdownArray = [];
   $connector = \Drupal::service('communico_plus.connector');
@@ -183,9 +209,9 @@ function communicoPlusGetAgegroupsArray() {
 /**
  * @param $valArray
  * @return true
- * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
- * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
- * @throws \Drupal\Core\Entity\EntityStorageException
+ * @throws InvalidPluginDefinitionException
+ * @throws PluginNotFoundException
+ * @throws EntityStorageException
  */
 function createEventPageNode($valArray) {
   $entityTypeManager = \Drupal::service('entity_type.manager');

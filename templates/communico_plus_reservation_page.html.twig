@@ -1,0 +1,30 @@
+{#
+/**
+ * @file
+ * Default theme implementation to output a Communico reservation.
+ *
+ * Available variables:
+ *   - reservation_data (An array containing all reservation data.)
+ *   - expire_date
+ *   - branch_link
+ *   - expired_text
+ *   - description
+ *
+ * @ingroup themeable
+ */
+#}
+<h1 class="page-title">
+  {{ reservaton_data.data.title }}
+</h1>
+<h2 class="node__title">
+  {{ reservation_data.data.subTitle }}
+</h2>
+<div class="c-feature">
+  <a href = "{{ branch_link }}" target="_new">{{ reservation_data.data.locationName }}</a>
+</div>
+<div class="c-feature">
+  {{ expired_text }}
+</div>
+<p>
+  {{ description }}
+</p>

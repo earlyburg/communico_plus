@@ -65,7 +65,6 @@ private UtilityService $utilityService;
    * @param array $form
    * @param FormStateInterface $form_state
    * @return array
-   *
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::COMMUNICO_PLUS_SETTINGS);

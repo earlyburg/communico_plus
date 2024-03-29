@@ -7,6 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
@@ -20,48 +21,48 @@ class CommunicoPlusController extends ControllerBase {
   /**
    * Communico connector service.
    *
-   * @var \Drupal\communico_plus\Service\ConnectorService
+   * @var ConnectorService
    */
   protected ConnectorService $connector;
 
   /**
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
 
   /**
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   * @var ModuleHandlerInterface
    */
   protected $moduleHandler;
 
   /**
    * The file system service.
    *
-   * @var \Drupal\Core\File\FileSystemInterface
+   * @var FileSystemInterface
    */
   protected FileSystemInterface $fileSystem;
 
   /**
-   * @var \Drupal\Core\Messenger\MessengerInterface
+   * @var MessengerInterface
    */
   protected $messenger;
 
   /**
    * The date formatter service.
    *
-   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   * @var DateFormatterInterface
    */
   protected DateFormatterInterface $dateFormatter;
 
   /**
    * The image factory.
    *
-   * @var \Drupal\Core\Image\ImageFactory
+   * @var ImageFactory
    */
   protected ImageFactory $imageFactory;
 
   /**
-   * @var \Drupal\communico_plus\Service\UtilityService
+   * @var UtilityService
    */
   protected UtilityService $utilityService;
 
@@ -116,116 +117,132 @@ class CommunicoPlusController extends ControllerBase {
 
   /**
    * @param null $eventId
-   * @return string[]
+   * @return array
+   * @throws GuzzleException
    */
-  public function event($eventId = NULL) {
+  public function event($eventId) {
     $event = $this->connector->getEvent($eventId);
-    ($event['data']['eventImage'] != NULL) ? $imageUrl = $event['data']['eventImage'] : $imageUrl = FALSE;
-    $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
+
     $branchLink = $this->config
         ->get('communico_plus.settings')
-        ->get('linkurl').'/event/'.$event['data']['eventId'].'#branch';
-    $calendarImagePath = '/'.$this->moduleHandler
+        ->get('linkurl') . '/event/' . $eventId . '#branch';
+
+    $calendarImagePath = '/' . $this->moduleHandler
         ->getModule('communico_plus')
         ->getPath() . '/images/calendar.png';
-    $map_pinImagePath = '/'.$this->moduleHandler
+
+    $map_pinImagePath = '/' . $this->moduleHandler
         ->getModule('communico_plus')
         ->getPath() . '/images/map_pin.png';
-    $var ='<h1 class="page-title">';
-    $var .= $event['data']['title'];
-    $var .= '</h1>';
-    $var .='<h2 class="node__title">';
-    $var .= $event['data']['subTitle'];
-    $var .= '</h2>';
-    $var .= '<div class="c-feature">';
-    $var .= '<div class="c-iconimage"><img src="'.$map_pinImagePath.'"></div>';
-    $var .= '<a href = "'.$branchLink.'" target="_new">'.$event['data']['locationName'].'</a>';
-    $var .= '</div>';
-    $var .= '<br>';
-    $var .= '<div class="c-feature">';
-    $var .= '<div class="c-iconimage"><img src="'.$calendarImagePath.'"></div>';
-    if ($this->utilityService->checkIsEventExpired($expire_dt)) {
-      $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']));
-      $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']);
-    } else {
-      $var .= 'This event starts on '.$this->utilityService->formatDatestamp($event['data']['eventStart']);
-    }
-    $var .= '</div>';
-    $var .= '<br>';
-    $var .= '<div class="c-feature">';
-    $var .= '<div class="c-title">Age Group:</div> '.implode(', ',$event['data']['ages']);
-    $var .= '</div>';
-    $var .= '<br>';
-    $var .= '<div class="c-feature">';
-    $var .= '<div class="c-title">Event Type:</div> '.implode(', ',$event['data']['types']);
-    $var .= '</div>';
-    $var .= '<br>';
 
-    $registrationUrl = $event['data']['eventRegistrationUrl'];
-    if($registrationUrl != NULL) {
-      $regUrl = Url::fromUri($registrationUrl)->toString();
-      $var .= '<div class="c-feature">';
-      $var .= '<a href="'.$regUrl.'" target="_new">';
-      $var .= '<div id="event-sub-button">Register</div>';
-      $var .= '</a>';
-      $var .= '</div>';
+    $displayImage = '';
+    if (array_key_exists('eventImage', $event['data']) && $event['data']['eventImage'] != NULL) {
+      $imageUrl = $event['data']['eventImage'];
+      $displayImage = $this->utilityService->createControllerDisplayImage($imageUrl, $eventId);
     }
-    $var .= '<p>';
-    $var .= $event['data']['shortDescription'];
-    $var .= '</p>';
-    $var .= '<p>';
-    $var .= $event['data']['description'];
-    $var .= '</p>';
-    $return = [
-      '#type' => 'markup',
+
+    $var = '';
+    $expire_dt = '';
+    if (array_key_exists('eventEnd', $event['data']) && $event['data']['eventEnd'] != NULL) {
+      $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
+      if ($this->utilityService->checkIsEventExpired($expire_dt)) {
+        $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']));
+        $var = 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']);
+      }
+      else {
+        if (array_key_exists('eventStart', $event['data']) && $event['data']['eventStart'] != NULL) {
+          $var .= 'This event starts on ' . $this->utilityService->formatDatestamp($event['data']['eventStart']);
+        }
+      }
+    }
+
+    $regUrl = '';
+    if (array_key_exists('eventRegistrationUrl', $event['data']) && $event['data']['eventRegistrationUrl'] != NULL) {
+      $registrationUrl = $event['data']['eventRegistrationUrl'];
+      $regUrl = Url::fromUri($registrationUrl)->toString();
+    }
+
+    $description = '';
+    if (array_key_exists('description', $event['data']) && $event['data']['description'] != NULL) {
+      $description .= '<p>';
+      $description .= $event['data']['shortDescription'];
+      $description .= '</p>';
+      $description .= '<p>';
+      $description .= $event['data']['description'];
+      $description .= '</p>';
+    }
+
+    return [
       '#attached' => [
         'library' => [
           'communico_plus/communico_plus.library',
         ],
       ],
-      '#markup' => $var,
-      'one_image' => $this->utilityService->createControllerDisplayImage($imageUrl, $eventId),
+      '#theme' => 'communico_plus_event_page',
+      '#event_data' => $event,
+      '#expire_date' => $expire_dt,
+      '#branch_link' => $branchLink,
+      '#calendar_image_path' => $calendarImagePath,
+      '#map_pin_image_path' => $map_pinImagePath,
+      '#reg_url' => $regUrl,
+      '#expired_text' => $var,
+      '#description' => $description,
+      '#one_image' => $displayImage,
     ];
-    return $return;
   }
 
   /**
    * @param null $registrationId
-   * @return string[]
-   *
+   * @return array
+   * @throws GuzzleException
    */
-  public function reservation($registrationId = NULL) {
+  public function reservation($registrationId) {
     $registration = $this->connector->getReservation($registrationId);
-    $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
-    $branchLink = $this->config->get('communico_plus.settings')->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
-    $var ='<h1 class="page-title">';
-    $var .= $registration['data']['title'];
-    $var .= '</h1>';
-    $var .='<h2 class="node__title">';
-    $var .= $registration['data']['subTitle'];
-    $var .= '</h2>';
-    $var .= '<div class="c-feature">';
-    $var .= '<a href = "'.$branchLink.'" target="_new">'.$registration['data']['locationName'].'</a>';
-    $var .= '</div>';
-    $var .= '<div class="c-feature">';
-    if ($this->utilityService->checkIsEventExpired($expire_dt)) {
-      $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']));
-      $var .= 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']);
-    } else {
-      $var .= 'This event starts on '.$this->utilityService->formatDatestamp($registration['data']['eventStart']);
+
+    \Drupal::logger('communico_plus')->debug('<pre>' . print_r($registration,TRUE) . '</pre>'); //--test
+
+    $branchLink = $this->config
+        ->get('communico_plus.settings')
+        ->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
+
+    $var = '';
+    $expire_dt = '';
+    if (array_key_exists('eventEnd', $registration['data']) && $registration['data']['eventEnd'] != NULL) {
+      $expire_dt = new DrupalDateTime($registration['data']['eventEnd']);
+      if ($this->utilityService->checkIsEventExpired($expire_dt)) {
+        $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']));
+        $var = 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($registration['data']['eventEnd']);
+      }
+      else {
+        if (array_key_exists('eventStart', $registration['data']) && $registration['data']['eventStart'] != NULL) {
+          $var .= 'This event starts on ' . $this->utilityService->formatDatestamp($registration['data']['eventStart']);
+        }
+      }
     }
-    $var .= '</div>';
-    $var .= '<p>';
-    $var .= $registration['data']['shortDescription'];
-    $var .= '</p>';
-    $var .= '<p>';
-    $var .= $registration['data']['description'];
-    $var .= '</p>';
-    $return = [
-      '#type' => 'markup',
-      '#markup' => $var,
+
+    $description = '';
+    if (array_key_exists('description', $registration['data']) && $registration['data']['description'] != NULL) {
+      $description .= '<p>';
+      $description .= $registration['data']['shortDescription'];
+      $description .= '</p>';
+      $description .= '<p>';
+      $description .= $registration['data']['description'];
+      $description .= '</p>';
+    }
+
+    return [
+      '#attached' => [
+        'library' => [
+          'communico_plus/communico_plus.library',
+        ],
+      ],
+      '#theme' => 'communico_plus_reservation_page',
+      '#reservation_data' => $registration,
+      '#expire_date' => $expire_dt,
+      '#branch_link' => $branchLink,
+      '#expired_text' => $var,
+      '#description' => $description,
     ];
-    return $return;
   }
 
 }
