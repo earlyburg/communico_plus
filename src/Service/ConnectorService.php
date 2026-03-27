@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\communico_plus\Service\ConnectorService.
- */
 namespace Drupal\communico_plus\Service;
 
 use Drupal\Component\Serialization\Json;
@@ -18,16 +14,19 @@ use Drupal\Core\Logger\LoggerChannelFactory;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class ConnectorService
- * @package Drupal\communico_plus
+ * The random frontpage connector service class.
  *
+ * \Drupal\communico_plus\Service\ConnectorService.
  */
-class ConnectorService {
+class ConnectorService
+{
 
-  /**
-   * @var ClientInterface
-   */
-  private ClientInterface $httpClient;
+    /**
+     * The Drupal http client interface.
+     *
+     * @var ClientInterface
+     */
+    private ClientInterface $httpClient;
 
   /**
    * The config factory interface.
@@ -50,13 +49,14 @@ class ConnectorService {
     */
  protected LoggerChannelFactory $loggerFactory;
 
-  /**
-   * @param ClientInterface $httpClient
-   * @param ConfigFactoryInterface $config
-   * @param State $state
-   * @param LoggerChannelFactory $logger_factory
-   */
-  public function __construct(
+    /**
+     * @param ClientInterface $httpClient
+     * @param ConfigFactoryInterface $config
+     * @param State $state
+     * @param LoggerChannelFactory $logger_factory
+     */
+
+    public function __construct(
     ClientInterface $httpClient,
     ConfigFactoryInterface $config,
     State $state,
@@ -65,23 +65,6 @@ class ConnectorService {
     $this->config = $config;
     $this->state = $state;
     $this->loggerFactory = $logger_factory;
-  }
-
-  /**
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   The Drupal service container.
-   *
-   * @return static
-   * @throws ContainerExceptionInterface
-   * @throws NotFoundExceptionInterface
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-    $container->get('http_client'),
-    $container->get('config.factory'),
-    $container->get('state'),
-    $container->get('logger.factory'),
-    );
   }
 
   /**
@@ -180,7 +163,7 @@ class ConnectorService {
     if (!$start) {
       $start = '0';
     }
-    if(!$limit) {
+    if (!$limit) {
       $limit = '100';
     }
     if (!$this->isAuthTokenValid()) {

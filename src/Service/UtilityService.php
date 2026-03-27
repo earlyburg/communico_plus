@@ -103,26 +103,6 @@ class UtilityService {
   }
 
   /**
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   The Drupal service container.
-   *
-   * @return static
-   * @throws ContainerExceptionInterface
-   * @throws NotFoundExceptionInterface
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('config.factory'),
-      $container->get('logger.factory'),
-      $container->get('date.formatter'),
-      $container->get('file_system'),
-      $container->get('image.factory'),
-      $container->get('entity_type.manager'),
-      $container->get('database'),
-    );
-  }
-
-  /**
    * @param null $dateString
    * @return string
    * formats a Communico date into a more readable format
@@ -285,6 +265,7 @@ class UtilityService {
    * @return array
    * creates a library locations dropdown array
    *
+   * @throws \Exception
    */
   public function locationDropdown() {
     $dropdownArray = [];
@@ -303,6 +284,7 @@ class UtilityService {
    * @return array
    * creates an event types dropdown array
    *
+   * @throws \Exception
    */
   public function typesDropdown() {
     $dropdownArray = [];
@@ -321,6 +303,7 @@ class UtilityService {
    * @return array
    * creates an event types dropdown array
    *
+   * @throws \Exception
    */
   public function agesDropdown() {
     $dropdownArray = [];
@@ -351,7 +334,9 @@ class UtilityService {
 
   /**
    * @param $eventId
+   *
    * @return false|mixed
+   * @throws \Exception
    */
   public function checkEventExists($eventId) {
     $idString = $this->database->select('node__field_communico_event_id', 'n')
@@ -365,8 +350,10 @@ class UtilityService {
 
   /**
    * @param $locationId
+   *
    * @return bool
    *
+   * @throws \Exception
    */
   public function checkLocationExists($locationId) {
     $idString = $this->database->select('node__field_communico_location_id', 'n')
@@ -381,6 +368,7 @@ class UtilityService {
   /**
    * @return array
    *
+   * @throws \Exception
    */
   public function getStoredLibraryLocations() {
     $returnArray = [];
@@ -394,8 +382,10 @@ class UtilityService {
 
   /**
    * @param null $id
+   *
    * @return mixed
    *
+   * @throws \Exception
    */
   public function getEventTypeString($id = NULL) {
     $return = $this->database->select('communico_types', 'n')
@@ -456,6 +446,7 @@ class UtilityService {
   /**
    * @return string
    *
+   * @throws \Exception
    */
   public function makeAllAgesString() {
     $newAgeString = '';
@@ -471,6 +462,7 @@ class UtilityService {
   /**
    * @return string
    *
+   * @throws \Exception
    */
   public function makeAllLocationsString() {
     $dropdownArray = $this->locationDropdown();
