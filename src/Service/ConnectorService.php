@@ -7,11 +7,8 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Drupal\Core\State\State;
 use Drupal\Core\Logger\LoggerChannelFactory;
-use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * The random frontpage connector service class.

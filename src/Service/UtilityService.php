@@ -16,10 +16,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Exception;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
-use Psr\Container\NotFoundExceptionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
