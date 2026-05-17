@@ -15,8 +15,7 @@ use Drupal\Core\Logger\LoggerChannelFactory;
  *
  * \Drupal\communico_plus\Service\ConnectorService.
  */
-class ConnectorService
-{
+class ConnectorService {
 
     /**
      * The Drupal http client interface.
