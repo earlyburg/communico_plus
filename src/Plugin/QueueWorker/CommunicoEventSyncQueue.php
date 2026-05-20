@@ -2,15 +2,10 @@
 
 namespace Drupal\communico_plus\Plugin\QueueWorker;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\Core\Annotation\QueueWorker;
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\communico_plus\Service\UtilityService;
 use Drupal\communico_plus\Service\ConnectorService;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,14 +22,14 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
   /**
    * Communico connector service.
    *
-   * @var ConnectorService
+   * @var \Drupal\communico_plus\Service\ConnectorService
    */
   protected ConnectorService $connector;
 
   /**
    * The communico plus utility service.
    *
-   * @var UtilityService
+   * @var \Drupal\communico_plus\Service\UtilityService
    */
   protected UtilityService $utilityService;
 
@@ -47,17 +42,18 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
    *   The plugin id string.
    * @param string $plugin_definition
    *   The plugin definition string.
-   * @param UtilityService $utility_service
+   * @param \Drupal\communico_plus\Service\UtilityService $utility_service
    *   The communico utility service.
-   * @param ConnectorService $communico_plus_connector
+   * @param \Drupal\communico_plus\Service\ConnectorService $communico_plus_connector
    *   The communico connector service.
    */
   public function __construct(
-  array $configuration,
-  $plugin_id,
-  $plugin_definition,
-  UtilityService $utility_service,
-  ConnectorService $communico_plus_connector) {
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    UtilityService $utility_service,
+    ConnectorService $communico_plus_connector,
+  ) {
     $this->utilityService = $utility_service;
     $this->connector = $communico_plus_connector;
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -66,7 +62,7 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
   /**
    * The mars market type sync queue create method.
    *
-   * @param ContainerInterface $container
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The Symphony container interface.
    * @param array $configuration
    *   The configuration array.
@@ -79,7 +75,8 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition) {
+    $plugin_definition,
+  ) {
     return new static(
       $configuration,
       $plugin_id,
@@ -90,12 +87,10 @@ class CommunicoEventSyncQueue extends QueueWorkerBase implements ContainerFactor
   }
 
   /**
-   * @param $item
-   * @return void
-   * @throws InvalidPluginDefinitionException
-   * @throws PluginNotFoundException
-   * @throws EntityStorageException
-   * @throws GuzzleException
+   * The processItem method.
+   *
+   * @param object $item
+   *   The item to process.
    */
   public function processItem($item) {
     if ($item) {

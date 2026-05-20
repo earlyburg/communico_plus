@@ -1,16 +1,16 @@
 <?php
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\Core\Entity\EntityStorageException;
+/**
+ * @file
+ * Communico Plus module helper functions and theme hooks.
+ */
+
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+use Drupal\block_content\BlockContentInterface;
 
 /**
- * @param array $suggestions
- * @param array $variables
- * @param $hook
  * Implements hook_theme_suggestions_alter().
  */
 function communico_plus_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
@@ -20,22 +20,17 @@ function communico_plus_theme_suggestions_alter(array &$suggestions, array $vari
 }
 
 /**
- * @param array $suggestions
- * @param array $variables
- * Implements hook_theme_suggestons_block_alter()
+ * Implements hook_theme_suggestions_block_alter().
  */
 function communico_plus_theme_suggestions_block_alter(array &$suggestions, array $variables) {
   $content = $variables['elements']['content'];
-  if (isset($content['#block_content']) && $content['#block_content'] instanceof \Drupal\block_content\BlockContentInterface) {
+  if (isset($content['#block_content']) && $content['#block_content'] instanceof BlockContentInterface) {
     $suggestions[] = 'block__' . $content['#block_content']->bundle();
   }
 }
 
 /**
- * @param $form
- * @param FormStateInterface $form_state
- * @param $form_id
- * Implements hook_form_alter()
+ * Implements hook_form_alter().
  */
 function communico_plus_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id == 'communico_plus_filter_form') {
@@ -45,7 +40,6 @@ function communico_plus_form_alter(&$form, FormStateInterface $form_state, $form
 
 /**
  * Implements hook_theme().
- *
  */
 function communico_plus_theme($existing, $type, $theme, $path) {
   return [
@@ -110,9 +104,7 @@ function communico_plus_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implements HOOK_cron.
- *
- * @return void
+ * Implements hook_cron().
  */
 function communico_plus_cron() {
 
@@ -129,7 +121,7 @@ function communico_plus_cron() {
     ->condition('type', 'event_page')
     ->condition('status', '1')
     ->execute();
-  foreach($eventNids as $id) {
+  foreach ($eventNids as $id) {
     $node = $entityTypeManager->load($id);
     if ($utilityService->checkIsEventExpired($node->field_communico_start_date->value)) {
       $node->setUnpublished();
@@ -138,7 +130,7 @@ function communico_plus_cron() {
   }
   if ($autoSave == 1) {
     $eventSyncQueue = $queueFactory->get('communico_event_sync_queue');
-    // get the libraries we are storing
+    // Get the libraries we are storing.
     foreach ($utilityService->locationDropdown() as $locationId => $nameString) {
       // If we are storing nodes with this location already, create queue item.
       if ($utilityService->checkLocationExists($locationId)) {
@@ -167,53 +159,67 @@ function communico_plus_cron() {
 }
 
 /**
- * @return array
+ * The communico_plus_get_types_array function.
  *
+ * @return array
+ *   An array of event types from the Communico API.
  */
-function communicoPlusGetTypesArray() {
+function communico_plus_get_types_array() {
   $dropdownArray = [];
   $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getEventTypes();
-  foreach($return['data']['entries'] as $index => $name) {
+  foreach ($return['data']['entries'] as $index => $name) {
     $dropdownArray[$index] = $name['name'];
   }
   return $dropdownArray;
 }
 
 /**
+ * The communico_plus_get_location_array function.
+ *
  * @return array
+ *   An array of library locations from the Communico API.
  */
-function communicoPlusGetLocationArray() {
+function communico_plus_get_location_array() {
   $dropdownArray = [];
   $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getLibraryLocations();
-  foreach($return['data']['entries'] as $name) {
+  foreach ($return['data']['entries'] as $name) {
     $dropdownArray[$name['id']] = $name['name'];
   }
   return $dropdownArray;
 }
 
 /**
+ * The communico_plus_get_agegroups_array function.
+ *
  * @return array
+ *   An array of age groups from the Communico API.
  */
-function communicoPlusGetAgegroupsArray() {
+function communico_plus_get_agegroups_array() {
   $dropdownArray = [];
   $connector = \Drupal::service('communico_plus.connector');
   $return = $connector->getEventAgeGroups();
-  foreach($return['data']['entries'] as $index => $group) {
+  foreach ($return['data']['entries'] as $index => $group) {
     $dropdownArray[$index] = $group;
   }
   return $dropdownArray;
 }
 
 /**
- * @param $valArray
- * @return true
- * @throws InvalidPluginDefinitionException
- * @throws PluginNotFoundException
- * @throws EntityStorageException
+ * The communico_plus_create_event_page_node function.
+ *
+ * @param array $valArray
+ *   An array of event information to create an event page node with.
+ *
+ * @return bool
+ *   Returns true if the node was created successfully.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ * @throws \Drupal\Core\Entity\EntityStorageException
  */
-function createEventPageNode($valArray) {
+function communico_plus_create_event_page_node($valArray) {
   $entityTypeManager = \Drupal::service('entity_type.manager');
   $utilityService = \Drupal::service('communico_plus.utilities');
   $newEventPage = $entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
@@ -221,10 +227,10 @@ function createEventPageNode($valArray) {
   $end_date = $utilityService->findDateFromDatestring($valArray['eventEnd']);
   $agesArray = [];
   $typesArray = [];
-  foreach($valArray['ages'] as $age) {
+  foreach ($valArray['ages'] as $age) {
     $agesArray['value'] = $age;
   }
-  foreach($valArray['types'] as $type) {
+  foreach ($valArray['types'] as $type) {
     $typesArray['value'] = $type;
   }
   $newEventPage->set('title', $valArray['title']);
@@ -240,17 +246,20 @@ function createEventPageNode($valArray) {
   $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
   $newEventPage->enforceIsNew();
   $newEventPage->save();
-  return true;
+  return TRUE;
 }
 
 /**
- * @param $success
- * @param $results
- * @param $operations
- * @return void
+ * The communico_plus_finished function.
  *
+ * @param bool $success
+ *   Whether the batch finished successfully.
+ * @param array $results
+ *   The results of the batch operations.
+ * @param array $operations
+ *   The operations that were performed during the batch.
  */
-function communicoPlusFinished($success, $results, $operations) {
+function communico_plus_finished($success, $results, $operations) {
   if ($success) {
     $message = t('All operations completed successfully.');
   }
@@ -271,7 +280,7 @@ function communico_plus_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<div>' . t('This module allows content from Communico to be integrated into Drupal.') . '</div>';
       $output .= '<div>' . t('Go to the admin page <a href=":aliases">"/admin/config/communico_plus/config"</a> and input the correct information for your environment and save the config.', [':aliases' => Url::fromRoute('communico_plus.config')->toString()]) . '</div>';
       $output .= '<div>' . t('Check the " Rebuild the filter block select element values" checkbox and hit save. This is necessary to build the library locations dropdown.') . '</div>';
-      $output .= '<div>' . t('Go to the import admin page <a href=":aliases">"/admin/config/communico_plus/import"</a> to import Communico events as node content.', [':aliases' => Url::fromRoute('communico_plus.import.config')->toString()])  . '</div>';
+      $output .= '<div>' . t('Go to the import admin page <a href=":aliases">"/admin/config/communico_plus/import"</a> to import Communico events as node content.', [':aliases' => Url::fromRoute('communico_plus.import.config')->toString()]) . '</div>';
       return $output;
   }
 }

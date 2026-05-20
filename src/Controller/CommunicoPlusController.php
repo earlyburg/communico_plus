@@ -7,7 +7,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
@@ -16,67 +15,86 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Image\ImageFactory;
 
+/**
+ * The CommunicoPlusController class.
+ */
 class CommunicoPlusController extends ControllerBase {
 
   /**
    * Communico connector service.
    *
-   * @var ConnectorService
+   * @var \Drupal\communico_plus\Service\ConnectorService
    */
   protected ConnectorService $connector;
 
   /**
-   * @var ConfigFactoryInterface
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
 
   /**
-   * @var ModuleHandlerInterface
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
   /**
    * The file system service.
    *
-   * @var FileSystemInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
   protected FileSystemInterface $fileSystem;
 
   /**
-   * @var MessengerInterface
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
 
   /**
    * The date formatter service.
    *
-   * @var DateFormatterInterface
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
   protected DateFormatterInterface $dateFormatter;
 
   /**
    * The image factory.
    *
-   * @var ImageFactory
+   * @var \Drupal\Core\Image\ImageFactory
    */
   protected ImageFactory $imageFactory;
 
   /**
-   * @var UtilityService
+   * The utility service.
+   *
+   * @var \Drupal\communico_plus\Service\UtilityService
    */
   protected UtilityService $utilityService;
 
   /**
    * Communico Plus Controller constructor.
    *
-   * @param ConfigFactoryInterface $config_factory
-   * @param ConnectorService $communico_plus_connector
-   * @param ModuleHandlerInterface $module_handler
-   * @param FileSystemInterface $file_system
-   * @param MessengerInterface $messengerInterface
-   * @param DateFormatterInterface $date_formatter
-   * @param ImageFactory $image_factory
-   * @param UtilityService $utility_service
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\communico_plus\Service\ConnectorService $communico_plus_connector
+   *   The Communico connector service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messengerInterface
+   *   The messenger service.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
+   * @param \Drupal\Core\Image\ImageFactory $image_factory
+   *   The image factory.
+   * @param \Drupal\communico_plus\Service\UtilityService $utility_service
+   *   The utility service.
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
@@ -86,7 +104,8 @@ class CommunicoPlusController extends ControllerBase {
     MessengerInterface $messengerInterface,
     DateFormatterInterface $date_formatter,
     ImageFactory $image_factory,
-    UtilityService $utility_service) {
+    UtilityService $utility_service,
+  ) {
     $this->config = $config_factory;
     $this->connector = $communico_plus_connector;
     $this->moduleHandler = $module_handler;
@@ -98,9 +117,13 @@ class CommunicoPlusController extends ControllerBase {
   }
 
   /**
+   * The create method.
+   *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container interface.
    *
    * @return \Drupal\communico_plus\Controller\CommunicoPlusController|static
+   *   The instantiated object.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -116,24 +139,28 @@ class CommunicoPlusController extends ControllerBase {
   }
 
   /**
-   * @param null $eventId
+   * The event function.
+   *
+   * @param string $eventId
+   *   The event ID.
+   *
    * @return array
-   * @throws GuzzleException
+   *   The render array for the event page.
    */
   public function event($eventId) {
     $event = $this->connector->getEvent($eventId);
 
     $branchLink = $this->config
-        ->get('communico_plus.settings')
-        ->get('linkurl') . '/event/' . $eventId . '#branch';
+      ->get('communico_plus.settings')
+      ->get('linkurl') . '/event/' . $eventId . '#branch';
 
     $calendarImagePath = '/' . $this->moduleHandler
-        ->getModule('communico_plus')
-        ->getPath() . '/images/calendar.png';
+      ->getModule('communico_plus')
+      ->getPath() . '/images/calendar.png';
 
     $map_pinImagePath = '/' . $this->moduleHandler
-        ->getModule('communico_plus')
-        ->getPath() . '/images/map_pin.png';
+      ->getModule('communico_plus')
+      ->getPath() . '/images/map_pin.png';
 
     $displayImage = '';
     if (array_key_exists('eventImage', $event['data']) && $event['data']['eventImage'] != NULL) {
@@ -192,16 +219,20 @@ class CommunicoPlusController extends ControllerBase {
   }
 
   /**
-   * @param null $registrationId
+   * The reservation function.
+   *
+   * @param string $registrationId
+   *   The registration ID.
+   *
    * @return array
-   * @throws GuzzleException
+   *   The render array for the reservation page.
    */
   public function reservation($registrationId) {
     $registration = $this->connector->getReservation($registrationId);
 
     $branchLink = $this->config
-        ->get('communico_plus.settings')
-        ->get('linkurl').'/event/'.$registration['data']['eventId'].'#branch';
+      ->get('communico_plus.settings')
+      ->get('linkurl') . '/event/' . $registration['data']['eventId'] . '#branch';
 
     $var = '';
     $expire_dt = '';

@@ -2,10 +2,6 @@
 
 namespace Drupal\communico_plus\Plugin\QueueWorker;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\Core\Annotation\QueueWorker;
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
@@ -25,7 +21,7 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
   /**
    * The entity type manager.
    *
-   * @var EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 
@@ -38,14 +34,15 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
    *   The plugin id string.
    * @param string $plugin_definition
    *   The plugin definition string.
-   * @param EntityTypeManagerInterface $entity_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
    *   The entity type manager.
    */
   public function __construct(
-  array $configuration,
-  $plugin_id,
-  $plugin_definition,
-  EntityTypeManagerInterface $entity_manager) {
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    EntityTypeManagerInterface $entity_manager,
+  ) {
     $this->entityTypeManager = $entity_manager;
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
@@ -53,7 +50,7 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
   /**
    * The mars market type sync queue create method.
    *
-   * @param ContainerInterface $container
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The Symphony container interface.
    * @param array $configuration
    *   The configuration array.
@@ -66,7 +63,8 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition) {
+    $plugin_definition,
+  ) {
     return new static(
       $configuration,
       $plugin_id,
@@ -76,13 +74,14 @@ class CommunicoEventDeleteQueue extends QueueWorkerBase implements ContainerFact
   }
 
   /**
-   * @param $item
-   * @return void
-   * @throws InvalidPluginDefinitionException
-   * @throws PluginNotFoundException
-   * @throws EntityStorageException
+   * The processItem method.
    *
-   * @returns void
+   * @param object $item
+   *   The item to process.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function processItem($item) {
     if ($item) {

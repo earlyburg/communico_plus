@@ -1,48 +1,45 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\communico_plus\Form\CommunicoPlusImportConfigForm.
- */
-
 namespace Drupal\communico_plus\Form;
 
 use Drupal\communico_plus\Service\ConnectorService;
 use Drupal\Core\Logger\LoggerChannelFactory;
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\communico_plus\Service\UtilityService;
-use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * The CommunicoPlusImportConfigForm class.
+ */
 class CommunicoPlusImportConfigForm extends ConfigFormBase {
 
   /**
-   * @var UtilityService $utilityService
+   * The utility service.
+   *
+   * @var \Drupal\communico_plus\Service\UtilityService
    */
   protected UtilityService $utilityService;
 
   /**
-   * @var ConnectorService $connector
+   * The connector service.
+   *
+   * @var \Drupal\communico_plus\Service\ConnectorService
    */
   protected ConnectorService $connector;
 
   /**
    * Messenger service.
    *
-   * @var LoggerChannelFactory $logger_factory
+   * @var \Drupal\Core\Logger\LoggerChannelFactory
    */
   protected $loggerFactory;
 
   /**
    * The entity type manager.
    *
-   * @var EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 
@@ -54,16 +51,23 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   const COMMUNICO_PLUS_IMPORT_SETTINGS = 'communico_plus.import.settings';
 
   /**
-   * @param UtilityService $utility_service
-   * @param ConnectorService $communico_plus_connector
-   * @param LoggerChannelFactory $logger_factory
-   * @param EntityTypeManagerInterface $entity_manager
+   * CommunicoPlusImportConfigForm constructor.
+   *
+   * @param \Drupal\communico_plus\Service\UtilityService $utility_service
+   *   The utility service.
+   * @param \Drupal\communico_plus\Service\ConnectorService $communico_plus_connector
+   *   The Communico Plus connector service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactory $logger_factory
+   *   The logger factory.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
+   *   The entity type manager.
    */
   public function __construct(
     UtilityService $utility_service,
     ConnectorService $communico_plus_connector,
     LoggerChannelFactory $logger_factory,
-    EntityTypeManagerInterface $entity_manager) {
+    EntityTypeManagerInterface $entity_manager,
+  ) {
     $this->utilityService = $utility_service;
     $this->connector = $communico_plus_connector;
     $this->loggerFactory = $logger_factory;
@@ -71,11 +75,13 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   }
 
   /**
-   * @param ContainerInterface $container
-   * @return CommunicoPlusImportConfigForm|ConfigFormBase|static
-   * @throws ContainerExceptionInterface
-   * @throws NotFoundExceptionInterface
+   * The create method.
    *
+   * @param \Psr\Container\ContainerInterface $container
+   *   The container interface.
+   *
+   * @return CommunicoPlusImportConfigForm|ConfigFormBase|static
+   *   Returns an instance of this form class.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -87,15 +93,20 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   }
 
   /**
+   * The getFormId function.
+   *
    * @return string
+   *   The form ID.
    */
   public function getFormId() {
     return 'communico_plus_import_config_form';
   }
 
   /**
-   * @return string[]
+   * The getEditableConfigNames method.
    *
+   * @return static
+   *   The editable config names.
    */
   protected function getEditableConfigNames() {
     return [
@@ -104,10 +115,15 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   }
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return array
+   * The buildForm method.
    *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
+   * @return array
+   *   The form object.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::COMMUNICO_PLUS_IMPORT_SETTINGS);
@@ -129,7 +145,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
     $libraryText = '<div><i>Imports events from today\'s date to the last day of the following month.</i></div>';
     $libraryText .= '<h3>The following library locations have events stored in Drupal:</h3>';
     $currentLibraries = $this->utilityService->getStoredLibraryLocations();
-    foreach($currentLibraries as $library) {
+    foreach ($currentLibraries as $library) {
       $libraryText .= '<div>' . $library . '</div>';
     }
 
@@ -145,7 +161,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
     ];
 
     $updateText = '<div><i><b>The following locations can have new events automatically imported.</b></i></div>';
-    foreach($currentLibraries as $library) {
+    foreach ($currentLibraries as $library) {
       $updateText .= '<div>' . $library . '</div>';
     }
     $form['manage']['update_information'] = [
@@ -167,25 +183,29 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
   }
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @throws Exception
+   * The validateForm method.
    *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {}
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
+   * The submitForm method.
    *
-   * @throws GuzzleException
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $formValues = $form_state->getValues();
     if (array_key_exists('admin_library_location', $formValues) && !empty($formValues['admin_library_location'])) {
       $location = $formValues['admin_library_location'];
-      $type = null;
-      $age = null;
+      $type = NULL;
+      $age = NULL;
       $start_date = date('Y-m-d');
       $end_date = date('Y-m-d', strtotime('last day of +1 month'));
       $limit = 500;
@@ -196,11 +216,11 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
         'init_message' => $this->t('Initializing...'),
         'progress_message' => $this->t('Processed @current out of @total.'),
         'error_message' => $this->t('An error occurred during processing'),
-        'finished' => 'communicoPlusFinished',
+        'finished' => 'communico_plus_finished',
       ];
       foreach ($events as $event) {
         if (!$this->utilityService->checkEventExists($event['eventId'])) {
-          $batch['operations'][] = ['createEventPageNode', [$event]];
+          $batch['operations'][] = ['communico_plus_create_event_page_node', [$event]];
         }
       }
       batch_set($batch);

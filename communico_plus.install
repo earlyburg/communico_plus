@@ -12,7 +12,6 @@ use Drupal\Core\Database\Database;
  *
  * @see hook_schema()
  * @ingroup communico_plus
- * @return array
  */
 function communico_plus_schema() {
   $schema['communico_locations'] = [
@@ -32,7 +31,7 @@ function communico_plus_schema() {
       ],
     ],
     'unique keys' => [
-    'location_id' => ['location_id'],
+      'location_id' => ['location_id'],
     ],
     'primary key' => ['location_id'],
   ];
@@ -89,9 +88,9 @@ function communico_plus_schema() {
  * @ingroup communico_plus
  */
 function communico_plus_install() {
-#
+  // Create the tables for the module.
+  $schema = communico_plus_schema();
+  foreach ($schema as $name => $table) {
+    Database::getConnection()->schema()->createTable($name, $table);
+  }
 }
-
-
-
-

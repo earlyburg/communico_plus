@@ -1,86 +1,88 @@
 <?php
-/**
- * @file
- * Contains \Drupal\communico_plus\Service\UtilityService.
- */
+
 namespace Drupal\communico_plus\Service;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\StreamWrapper\PublicStream;
-use Exception;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
- * Class UtilityService
- * @package Drupal\communico_plus
- *
+ * The UtilityService service class.
  */
 class UtilityService {
 
   /**
    * The config factory interface.
    *
-   * @var ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
 
   /**
-    * Messenger service.
-    *
-    * @var LoggerChannelFactory
-    */
- protected LoggerChannelFactory $loggerFactory;
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   */
+  protected LoggerChannelFactory $loggerFactory;
 
   /**
    * The date formatter service.
    *
-   * @var DateFormatterInterface
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
   protected DateFormatterInterface $dateFormatter;
 
   /**
    * The file system service.
    *
-   * @var FileSystemInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
   protected FileSystemInterface $fileSystem;
 
   /**
    * The image factory.
    *
-   * @var ImageFactory
+   * @var \Drupal\Core\Image\ImageFactory
    */
   protected ImageFactory $imageFactory;
 
   /**
-   * @var Connection
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
    */
   protected Connection $database;
 
   /**
    * The entity type manager.
    *
-   * @var EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
-   * @param ConfigFactoryInterface $config
-   * @param LoggerChannelFactory $logger_factory
-   * @param DateFormatterInterface $date_formatter
-   * @param FileSystemInterface $file_system
-   * @param ImageFactory $image_factory
-   * @param EntityTypeManagerInterface $entity_manager
-   * @param Connection $connection
+   * The UtilityService constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   The config factory interface.
+   * @param \Drupal\Core\Logger\LoggerChannelFactory $logger_factory
+   *   The logger factory.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Image\ImageFactory $image_factory
+   *   The image factory.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection.
    */
   public function __construct(
     ConfigFactoryInterface $config,
@@ -89,7 +91,8 @@ class UtilityService {
     FileSystemInterface $file_system,
     ImageFactory $image_factory,
     EntityTypeManagerInterface $entity_manager,
-    Connection $connection) {
+    Connection $connection,
+  ) {
     $this->config = $config;
     $this->loggerFactory = $logger_factory;
     $this->dateFormatter = $date_formatter;
@@ -100,9 +103,13 @@ class UtilityService {
   }
 
   /**
-   * @param null $dateString
+   * The formatDatestamp function.
+   *
+   * @param string $dateString
+   *   The date string to format.
+   *
    * @return string
-   * formats a Communico date into a more readable format
+   *   Format a datestamp from Communico into a more readable format.
    */
   public function formatDatestamp($dateString) {
     $type = 'medium';
@@ -113,24 +120,34 @@ class UtilityService {
   }
 
   /**
-   * @param $startDate
-   * @param $endDate
-   * @return false|string
+   * The checkIfOneday function.
    *
+   * @param string $startDate
+   *   The start date of an event.
+   * @param string $endDate
+   *   The end date of an event.
+   *
+   * @return false|string
+   *   Check if an event is an all day event.
    */
   public function checkIfOneday($startDate, $endDate) {
     $period = FALSE;
     $startString = substr($startDate, -8);
     $endString = substr($endDate, -8);
-    if($startString == '00:00:00' && $endString == '23:59:00') {
+    if ($startString == '00:00:00' && $endString == '23:59:00') {
       $period = 'All day';
     }
     return $period;
   }
 
   /**
-   * @param $dateString
+   * The findHoursFromDatestring function.
+   *
+   * @param string $dateString
+   *   The date string to extract the hours from.
+   *
    * @return string
+   *   Extract the hours from a datestamp string from Communico.
    */
   public function findHoursFromDatestring($dateString) {
     $time = new DrupalDateTime($dateString);
@@ -138,9 +155,13 @@ class UtilityService {
   }
 
   /**
-   * @param null $dateString
-   * @return string
+   * The findDateFromDatestring function.
    *
+   * @param string $dateString
+   *   The date string to extract the date from.
+   *
+   * @return string
+   *   Extract the date from a datestamp string from Communico.
    */
   public function findDateFromDatestring($dateString) {
     $time = new DrupalDateTime($dateString);
@@ -148,24 +169,44 @@ class UtilityService {
   }
 
   /**
-   * @param $imageUrl
-   * @param $eventId
+   * The findTimeFromDatestring function.
+   *
+   * @param string $dateString
+   *   The date string to extract the time from.
+   *
+   * @return string
+   *   Extract the time from a datestamp string from Communico.
+   */
+  public function findTimeFromDatestring($dateString) {
+    $time = new DrupalDateTime($dateString);
+    return $time->format('g:i A');
+  }
+
+  /**
+   * The createEventImage function.
+   *
+   * @param string $imageUrl
+   *   The URL of the image to create a render array for.
+   * @param string $eventId
+   *   The ID of the event associated with the image.
+   *
    * @return array
-   * creates an image render array in drupal for an event
-   * @TODO get rid of built up images periodically
+   *   Creates an image render array.
+   *
+   * @todo get rid of built up images periodically
    */
   public function createEventImage($imageUrl, $eventId) {
     $imageStyle = $this->config->get('communico_plus.settings')->get('image_styles');
-    if(!$imageStyle) {
+    if (!$imageStyle) {
       $imageStyle = 'medium';
     }
     $image_render_array = FALSE;
-    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath().'/event_images';
+    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath() . '/event_images';
     if (!$this->fileSystem->prepareDirectory($path)) {
       $this->fileSystem->mkdir($path);
     }
     $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
-    if($ext != NULL && $ext != '') {
+    if ($ext != NULL && $ext != '') {
       $file_path_physical = $path . '/' . $eventId . '.' . $ext;
       /* check if the image already exists */
       if (file_exists($file_path_physical)) {
@@ -183,7 +224,7 @@ class UtilityService {
       else {
         /* save to fs */
         $fileOb = file_get_contents($imageUrl);
-        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, true);
+        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, TRUE);
         $image = $this->imageFactory->get($savedFile);
         if ($image->isValid()) {
           $image_render_array = [
@@ -198,124 +239,148 @@ class UtilityService {
     }
     return $image_render_array;
   }
-
-  public function createControllerDisplayImage($imageUrl, $eventId) {
-    $imageStyle = $this->config->get('communico_plus.settings')->get('page_styles');
-    if(!$imageStyle) {
-      $imageStyle = 'medium';
-    }
-    $image_render_array = FALSE;
-    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath().'/event_images';
-    if (!$this->fileSystem->prepareDirectory($path)) {
-      $this->fileSystem->mkdir($path);
-    }
-    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
-    if($ext != NULL && $ext != '') {
-      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
-      /* check if the image already exists */
-      if (file_exists($file_path_physical)) {
-        $image = $this->imageFactory->get($file_path_physical);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-      else {
-        /* save to fs */
-        $fileOb = file_get_contents($imageUrl);
-        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, true);
-        $image = $this->imageFactory->get($savedFile);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-    }
-    return $image_render_array;
-  }
-
 
   /**
-   * @param $eventEndDate
-   * @return bool
+   * The createControllerDisplayImage function.
    *
+   * @param string $imageUrl
+   *   The URL of the image to create a render array for.
+   * @param string $eventId
+   *   The ID of the event associated with the image.
+   *
+   * @return array
+   *   Creates an image render array in Drupal for an event.
+   *
+   * @todo Get rid of built up images periodically.
+   */
+  public function createControllerDisplayImage($imageUrl, $eventId) {
+    $imageStyle = $this->config->get('communico_plus.settings')->get('page_styles');
+    if (!$imageStyle) {
+      $imageStyle = 'medium';
+    }
+    $image_render_array = FALSE;
+    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath() . '/event_images';
+    if (!$this->fileSystem->prepareDirectory($path)) {
+      $this->fileSystem->mkdir($path);
+    }
+    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
+    if ($ext != NULL && $ext != '') {
+      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
+      /* check if the image already exists */
+      if (file_exists($file_path_physical)) {
+        $image = $this->imageFactory->get($file_path_physical);
+        if ($image->isValid()) {
+          $image_render_array = [
+            '#theme' => 'image_style',
+            '#width' => $image->getWidth(),
+            '#height' => $image->getHeight(),
+            '#style_name' => $imageStyle,
+            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
+          ];
+        }
+      }
+      else {
+        /* save to fs */
+        $fileOb = file_get_contents($imageUrl);
+        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, FALSE);
+        $image = $this->imageFactory->get($savedFile);
+        if ($image->isValid()) {
+          $image_render_array = [
+            '#theme' => 'image_style',
+            '#width' => $image->getWidth(),
+            '#height' => $image->getHeight(),
+            '#style_name' => $imageStyle,
+            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
+          ];
+        }
+      }
+    }
+    return $image_render_array;
+  }
+
+  /**
+   * The checkIsEventExpired function.
+   *
+   * @param string $eventEndDate
+   *   The end date of the event.
+   *
+   * @return bool
+   *   Returns TRUE if the event is expired, FALSE otherwise.
    */
   public function checkIsEventExpired($eventEndDate) {
     $date = date('Y-m-d H:i:s');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($eventEndDate);
-    ($expire_dt < $today_dt) ? $return = true : $return = false;
+    ($expire_dt < $today_dt) ? $return = TRUE : $return = FALSE;
     return $return;
   }
 
   /**
-   * @return array
-   * creates a library locations dropdown array
+   * The locationDropdown function.
    *
-   * @throws \Exception
+   * @return array
+   *   Creates a library locations dropdown array.
    */
   public function locationDropdown() {
     $dropdownArray = [];
     $return = $this->database->select('communico_locations', 'n')
-      ->fields('n', array('location_id', 'location_name'))
+      ->fields('n', ['location_id', 'location_name'])
       ->orderBy('location_name')
       ->execute()
       ->fetchAll();
-    foreach($return as $object) {
+    foreach ($return as $object) {
       $dropdownArray[$object->location_id] = $object->location_name;
     }
     return $dropdownArray;
   }
 
   /**
+   * The typesDropdown function.
+   *
    * @return array
-   * creates an event types dropdown array
+   *   Creates an event types dropdown array.
    *
    * @throws \Exception
    */
   public function typesDropdown() {
     $dropdownArray = [];
     $return = $this->database->select('communico_types', 'n')
-      ->fields('n', array('number', 'descr'))
+      ->fields('n', ['number', 'descr'])
       ->orderBy('descr')
       ->execute()
       ->fetchAll();
-    foreach($return as $object) {
+    foreach ($return as $object) {
       $dropdownArray[$object->number] = $object->descr;
     }
     return $dropdownArray;
   }
 
   /**
+   * The agesDropdown function.
+   *
    * @return array
-   * creates an event types dropdown array
+   *   Creates an event ages dropdown array.
    *
    * @throws \Exception
    */
   public function agesDropdown() {
     $dropdownArray = [];
     $return = $this->database->select('communico_ages', 'n')
-      ->fields('n', array('groupname'))
+      ->fields('n', ['groupname'])
       ->execute()
       ->fetchAll();
-    foreach($return as $object) {
+    foreach ($return as $object) {
       $dropdownArray[$object->groupname] = $object->groupname;
     }
     return $dropdownArray;
   }
 
   /**
+   * The imageStylesDropdown function.
+   *
    * @return array
+   *   Creates an image styles dropdown array.
+   *
    * @throws InvalidPluginDefinitionException
    * @throws PluginNotFoundException
    */
@@ -330,9 +395,14 @@ class UtilityService {
   }
 
   /**
-   * @param $eventId
+   * The checkEventExists function.
+   *
+   * @param string $eventId
+   *   The ID of the event to check for existence.
    *
    * @return false|mixed
+   *   Returns TRUE if the event exists, FALSE otherwise.
+   *
    * @throws \Exception
    */
   public function checkEventExists($eventId) {
@@ -346,9 +416,13 @@ class UtilityService {
   }
 
   /**
-   * @param $locationId
+   * The checkLocationExists function.
+   *
+   * @param string $locationId
+   *   The ID of the location to check for existence.
    *
    * @return bool
+   *   Returns TRUE if the location exists, FALSE otherwise.
    *
    * @throws \Exception
    */
@@ -363,14 +437,17 @@ class UtilityService {
   }
 
   /**
+   * The getStoredLibraryLocations function.
+   *
    * @return array
+   *   Returns an array of library locations.
    *
    * @throws \Exception
    */
   public function getStoredLibraryLocations() {
     $returnArray = [];
-    foreach($this->locationDropdown() as $locationId => $nameString) {
-      if($this->checkLocationExists($locationId)) {
+    foreach ($this->locationDropdown() as $locationId => $nameString) {
+      if ($this->checkLocationExists($locationId)) {
         $returnArray[] = $nameString;
       }
     }
@@ -378,9 +455,13 @@ class UtilityService {
   }
 
   /**
-   * @param null $id
+   * The getEventTypeString function.
    *
-   * @return mixed
+   * @param string $id
+   *   The ID of the event type to retrieve the string for.
+   *
+   * @return false|mixed
+   *   Returns the string associated with an event type ID.
    *
    * @throws \Exception
    */
@@ -394,12 +475,14 @@ class UtilityService {
   }
 
   /**
-   * @return string[]
+   * The datesDropdown function.
    *
+   * @return string[]
+   *   Creates a dates dropdown array.
    */
   public function datesDropdown() {
     $timeSelects = [
-      'today' =>'Today',
+      'today' => 'Today',
       'tomorrow' => 'Tomorrow',
       'thisweek' => 'This Week',
       'nextweek' => 'Next Week',
@@ -409,30 +492,40 @@ class UtilityService {
   }
 
   /**
-   * @param $daynumber
-   * @return string
+   * The getDayName function.
    *
+   * @param string $daynumber
+   *   The number of the day.
+   *
+   * @return string
+   *   Get the name of the day of the week from a number (1-7).
    */
   public function getDayName($daynumber) {
     switch ($daynumber) {
       case $daynumber == '1':
         $dayname = 'Monday';
         break;
+
       case $daynumber == '2':
         $dayname = 'Tuesday';
         break;
+
       case $daynumber == '3':
         $dayname = 'Wednesday';
         break;
+
       case $daynumber == '4':
         $dayname = 'Thursday';
         break;
+
       case $daynumber == '5':
         $dayname = 'Friday';
         break;
+
       case $daynumber == '6':
         $dayname = 'Saturday';
         break;
+
       case $daynumber == '7':
         $dayname = 'Sunday';
         break;
@@ -441,15 +534,18 @@ class UtilityService {
   }
 
   /**
+   * The makeAllAgesString function.
+   *
    * @return string
+   *   Returns a string of all age groups separated by commas.
    *
    * @throws \Exception
    */
   public function makeAllAgesString() {
     $newAgeString = '';
     $dropdownArray = $this->agesDropdown();
-    foreach($dropdownArray as $age) {
-      if($age != 'All ages') {
+    foreach ($dropdownArray as $age) {
+      if ($age != 'All ages') {
         $newAgeString .= $age . ',';
       }
     }
@@ -457,20 +553,31 @@ class UtilityService {
   }
 
   /**
+   * The makeAllLocationsString function.
+   *
    * @return string
+   *   Returns a string of all library locations separated by commas.
    *
    * @throws \Exception
    */
   public function makeAllLocationsString() {
     $dropdownArray = $this->locationDropdown();
     $newLocationString = '';
-    foreach($dropdownArray as $key => $value) {
-      $newLocationString .= $key.',';
+    foreach ($dropdownArray as $key => $value) {
+      $newLocationString .= $key . ',';
     }
     return substr($newLocationString, 0, -1);
   }
 
   /**
+   * The createEventNode function.
+   *
+   * @param array $valArray
+   *   The values for the event node.
+   *
+   * @return bool
+   *   Returns TRUE if the event node is created successfully, FALSE otherwise.
+   *
    * @throws EntityStorageException
    * @throws InvalidPluginDefinitionException
    * @throws PluginNotFoundException
@@ -481,10 +588,10 @@ class UtilityService {
     $end_date = $this->findDateFromDatestring($valArray['eventEnd']);
     $agesArray = [];
     $typesArray = [];
-    foreach($valArray['ages'] as $age) {
+    foreach ($valArray['ages'] as $age) {
       $agesArray['value'] = $age;
     }
-    foreach($valArray['types'] as $type) {
+    foreach ($valArray['types'] as $type) {
       $typesArray['value'] = $type;
     }
     $newEventPage->set('title', $valArray['title']);
@@ -500,20 +607,21 @@ class UtilityService {
     $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
     $newEventPage->enforceIsNew();
     $newEventPage->save();
-    return true;
+    return TRUE;
 
   }
 
   /**
-   * @return void
-   * @throws Exception
+   * The buildDropdownTables function.
+   *
+   * Builds the dropdown tables for event types, locations, and age groups.
    */
   public function buildDropdownTables() {
 
     $this->database->truncate('communico_types')->execute();
     $this->database->truncate('communico_locations')->execute();
     $this->database->truncate('communico_ages')->execute();
-    $typesArray = communicoPlusGetTypesArray();
+    $typesArray = communico_plus_get_types_array();
     foreach ($typesArray as $index => $value) {
       $entry = [
         'number' => $index,
@@ -521,7 +629,7 @@ class UtilityService {
       ];
       $this->database->insert('communico_types')->fields($entry)->execute();
     }
-    $locationArray = communicoPlusGetLocationArray();
+    $locationArray = communico_plus_get_location_array();
     foreach ($locationArray as $index => $value) {
       $entry = [
         'location_id' => $index,
@@ -529,7 +637,7 @@ class UtilityService {
       ];
       $this->database->insert('communico_locations')->fields($entry)->execute();
     }
-    $agegroupArray = communicoPlusGetAgegroupsArray();
+    $agegroupArray = communico_plus_get_agegroups_array();
     foreach ($agegroupArray as $index => $value) {
       $entry = [
         'number' => $index,

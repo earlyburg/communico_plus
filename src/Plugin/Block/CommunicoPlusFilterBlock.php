@@ -2,7 +2,6 @@
 
 namespace Drupal\communico_plus\Plugin\Block;
 
-use Drupal\Core\Block\Annotation\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -20,35 +19,48 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
   /**
+   * The Drupal form builder interface.
+   *
    * @var \Drupal\Core\Form\FormBuilderInterface
-   *   The Drupal form builder interface.
    */
   protected FormBuilderInterface $formBuilder;
 
   /**
-   * @param array $configuration
-   * @param $plugin_id
-   * @param $plugin_definition
-   * @param FormBuilderInterface $form_builder
+   * CommunicoPlusFilterBlock constructor.
    *
+   * @param array $configuration
+   *   The plugin configuration array.
+   * @param string $plugin_id
+   *   The plugin id string.
+   * @param array $plugin_definition
+   *   The plugin definition string.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The Drupal form builder interface.
    */
   public function __construct(
     array $configuration,
-          $plugin_id,
-          $plugin_definition,
-    FormBuilderInterface $form_builder) {
+    $plugin_id,
+    $plugin_definition,
+    FormBuilderInterface $form_builder,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->formBuilder = $form_builder;
   }
 
   /**
-   * @param ContainerInterface $container
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The Symfony container interface.
    * @param array $configuration
-   * @param $plugin_id
-   * @param $plugin_definition
+   *   The plugin configuration array.
+   * @param string $plugin_id
+   *   The plugin id string.
+   * @param array $plugin_definition
+   *   The plugin definition array.
    *
    * @return CommunicoPlusFilterBlock|static
-   *
+   *   The instantiated block object.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -60,7 +72,10 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
   }
 
   /**
-   * {@inheritdoc}
+   * The build method.
+   *
+   * @return array
+   *   The render array for the block.
    */
   public function build() {
     $config = $this->getConfiguration();
@@ -73,7 +88,10 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
   }
 
   /**
+   * The getCacheMaxAge method.
+   *
    * @return int
+   *   Returns zero.
    */
   public function getCacheMaxAge() {
     return 0;
@@ -85,34 +103,40 @@ class CommunicoPlusFilterBlock extends BlockBase implements ContainerFactoryPlug
   public function blockForm($form, FormStateInterface $form_state) {
     $form = parent::blockForm($form, $form_state);
     $config = $this->getConfiguration();
-    $form['communico_plus_filter_block_limit'] = array(
+    $form['communico_plus_filter_block_limit'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Limit'),
       '#description' => $this->t('Limit the number of results returned'),
-      '#default_value' => isset($config['communico_plus_filter_block_limit']) ? $config['communico_plus_filter_block_limit'] : '10',
-    );
+      '#default_value' => $config['communico_plus_filter_block_limit'] ?? '10',
+    ];
     return $form;
   }
 
   /**
-   * {@inheritdoc}
+   * The blockSubmit function.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
    */
   public function blockSubmit($form, FormStateInterface $form_state) {
     $this->configuration['communico_plus_filter_block_limit'] = $form_state->getValue('communico_plus_filter_block_limit');
   }
 
   /**
-   * Build the communico_plus event details block
-   * @param  array $config
+   * The buildCommunicoPlusFilterBlock method.
+   *
+   * @param array $config
+   *   The block configuration array.
+   *
    * @return array
+   *   The render array for the block content.
    */
   public function buildCommunicoPlusFilterBlock($config) {
     $filterForm = $this->formBuilder->getForm('Drupal\communico_plus\Form\CommunicoPlusFilterForm');
     $rendered_events['#filter_form'] = [$filterForm];
     return $rendered_events;
   }
-
-
-
 
 }

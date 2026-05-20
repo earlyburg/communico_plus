@@ -1,18 +1,15 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\communico_plus\Form\CommunicoPlusConfigForm.
- */
-
 namespace Drupal\communico_plus\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\communico_plus\Service\UtilityService;
 
+/**
+ * The CommunicoPlus ConfigForm class.
+ */
 class CommunicoPlusConfigForm extends ConfigFormBase {
 
   /**
@@ -23,20 +20,32 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
   const COMMUNICO_PLUS_SETTINGS = 'communico_plus.settings';
 
   /**
-   * @var UtilityService
+   * The UtilityService object.
+   *
+   * @var \Drupal\communico_plus\Service\UtilityService
    */
-private UtilityService $utilityService;
-
+  private UtilityService $utilityService;
 
   /**
-   * @param UtilityService $utility_service
+   * CommunicoPlusConfigForm constructor.
+   *
+   * @param \Drupal\communico_plus\Service\UtilityService $utility_service
+   *   The UtilityService object.
    */
-  public function __construct(UtilityService $utility_service) {
+  public function __construct(
+    UtilityService $utility_service,
+  ) {
     $this->utilityService = $utility_service;
   }
 
   /**
-   * {@inheritdoc}
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container interface.
+   *
+   * @return static
+   *   The instantiated object.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -45,15 +54,20 @@ private UtilityService $utilityService;
   }
 
   /**
+   * The getFormId method.
+   *
    * @return string
+   *   The form ID.
    */
   public function getFormId() {
     return 'communico_plus_config_form';
   }
 
   /**
-   * @return string[]
+   * The getEditableConfigNames method.
    *
+   * @return string[]
+   *   The editable configuration names.
    */
   protected function getEditableConfigNames() {
     return [
@@ -62,9 +76,15 @@ private UtilityService $utilityService;
   }
 
   /**
+   * The buildForm method.
+   *
    * @param array $form
-   * @param FormStateInterface $form_state
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
    * @return array
+   *   The form object.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::COMMUNICO_PLUS_SETTINGS);
@@ -75,36 +95,36 @@ private UtilityService $utilityService;
       '#open' => TRUE,
     ];
 
-    $form['api']['access_key'] = array(
+    $form['api']['access_key'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Access Key'),
       '#default_value' => $config->get('access_key'),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['api']['secret_key'] = array(
+    $form['api']['secret_key'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Secret Key'),
       '#default_value' => $config->get('secret_key'),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['api']['url'] = array(
+    $form['api']['url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Communico API URL'),
       '#default_value' => $config->get('url'),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['api']['linkurl'] = array(
+    $form['api']['linkurl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Communico Public URL'),
       '#default_value' => $config->get('linkurl'),
       '#required' => TRUE,
-    );
+    ];
 
     $valid = $config->get('secret_key');
-    if($valid != NULL &&  $valid != '') {
+    if ($valid != NULL &&  $valid != '') {
       $form['api']['rebuild_drops'] = [
         '#type' => 'checkbox',
         '#title' => 'Rebuild the filter block select element values:',
@@ -145,21 +165,28 @@ private UtilityService $utilityService;
   }
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @throws Exception
+   * The validateForm method.
    *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
+   * @throws Exception
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    if($form_state->getValue('rebuild_drops') == '1') {
+    if ($form_state->getValue('rebuild_drops') == '1') {
       $this->utilityService->buildDropdownTables();
     }
   }
 
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
+   * The submitForm method.
    *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config(static::COMMUNICO_PLUS_SETTINGS)
