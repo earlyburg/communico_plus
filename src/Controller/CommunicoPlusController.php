@@ -8,12 +8,12 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Url;
 use Drupal\communico_plus\Service\ConnectorService;
 use Drupal\communico_plus\Service\UtilityService;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Image\ImageFactory;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * The CommunicoPlusController class.
@@ -46,7 +46,7 @@ class CommunicoPlusController extends ControllerBase {
    *
    * @var \Drupal\Core\File\FileSystemInterface
    */
-  protected FileSystemInterface $fileSystem;
+  protected $fileSystem;
 
   /**
    * The messenger service.
@@ -60,21 +60,28 @@ class CommunicoPlusController extends ControllerBase {
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected DateFormatterInterface $dateFormatter;
+  protected $dateFormatter;
 
   /**
    * The image factory.
    *
    * @var \Drupal\Core\Image\ImageFactory
    */
-  protected ImageFactory $imageFactory;
+  protected $imageFactory;
 
   /**
    * The utility service.
    *
    * @var \Drupal\communico_plus\Service\UtilityService
    */
-  protected UtilityService $utilityService;
+  protected $utilityService;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * Communico Plus Controller constructor.
@@ -95,6 +102,8 @@ class CommunicoPlusController extends ControllerBase {
    *   The image factory.
    * @param \Drupal\communico_plus\Service\UtilityService $utility_service
    *   The utility service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
+   *   The entity type manager.
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
@@ -105,6 +114,7 @@ class CommunicoPlusController extends ControllerBase {
     DateFormatterInterface $date_formatter,
     ImageFactory $image_factory,
     UtilityService $utility_service,
+    EntityTypeManagerInterface $entity_manager,
   ) {
     $this->config = $config_factory;
     $this->connector = $communico_plus_connector;
@@ -114,6 +124,7 @@ class CommunicoPlusController extends ControllerBase {
     $this->dateFormatter = $date_formatter;
     $this->imageFactory = $image_factory;
     $this->utilityService = $utility_service;
+    $this->entityTypeManager = $entity_manager;
   }
 
   /**
@@ -135,11 +146,12 @@ class CommunicoPlusController extends ControllerBase {
       $container->get('date.formatter'),
       $container->get('image.factory'),
       $container->get('communico_plus.utilities'),
+      $container->get('entity_type.manager'),
     );
   }
 
   /**
-   * The event function.
+   * The getEventNode function.
    *
    * @param string $eventId
    *   The event ID.
@@ -147,75 +159,110 @@ class CommunicoPlusController extends ControllerBase {
    * @return array
    *   The render array for the event page.
    */
-  public function event($eventId) {
-    $event = $this->connector->getEvent($eventId);
+  public function getEventNode($eventId) {
+    $returnArray = [];
 
-    $branchLink = $this->config
-      ->get('communico_plus.settings')
-      ->get('linkurl') . '/event/' . $eventId . '#branch';
+    $eventStorage = $this->entityTypeManager->getStorage('node');
+    $eventNid = $eventStorage->getQuery()
+      ->condition('type', 'event_page')
+      ->condition('field_communico_event_id', $eventId)
+      ->accessCheck(FALSE)
+      ->execute();
 
-    $calendarImagePath = '/' . $this->moduleHandler
-      ->getModule('communico_plus')
-      ->getPath() . '/images/calendar.png';
+    if (!empty($eventNid)) {
+      $key = array_key_first($eventNid);
 
-    $map_pinImagePath = '/' . $this->moduleHandler
-      ->getModule('communico_plus')
-      ->getPath() . '/images/map_pin.png';
+      $loadedEvent = $eventStorage->load($eventNid[$key]);
 
-    $displayImage = '';
-    if (array_key_exists('eventImage', $event['data']) && $event['data']['eventImage'] != NULL) {
-      $imageUrl = $event['data']['eventImage'];
-      $displayImage = $this->utilityService->createControllerDisplayImage($imageUrl, $eventId);
-    }
+      $branchLink = $this->config
+        ->get('communico_plus.settings')
+        ->get('linkurl') . '/event/' . $eventId . '#branch';
 
-    $var = '';
-    $expire_dt = '';
-    if (array_key_exists('eventEnd', $event['data']) && $event['data']['eventEnd'] != NULL) {
-      $expire_dt = new DrupalDateTime($event['data']['eventEnd']);
-      if ($this->utilityService->checkIsEventExpired($expire_dt)) {
-        $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']));
-        $var = 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($event['data']['eventEnd']);
+      $calendarImagePath = '/' . $this->moduleHandler
+        ->getModule('communico_plus')
+        ->getPath() . '/images/calendar.png';
+
+      $map_pinImagePath = '/' . $this->moduleHandler
+        ->getModule('communico_plus')
+        ->getPath() . '/images/map_pin.png';
+
+      $displayImage = '';
+      if ($loadedEvent->get('field_communico_event_image')->title != NULL) {
+        $displayImage = $loadedEvent->get('field_communico_event_image')->view();
       }
-      else {
-        if (array_key_exists('eventStart', $event['data']) && $event['data']['eventStart'] != NULL) {
-          $var .= 'This event starts on ' . $this->utilityService->formatDatestamp($event['data']['eventStart']);
+
+      $startDate = $loadedEvent->get('field_communico_start_date')->value;
+      $endDate = $loadedEvent->get('field_communico_end_date')->value;
+      $eventTitle = $loadedEvent->get('title')->value;
+      $eventSubTitle = $loadedEvent->get('field_communico_subtitle')->value;
+      $eventLocationId = $loadedEvent->get('field_communico_location_id')->value;
+      $eventLocationName = $this->utilityService->getLocationNameFromId($eventLocationId);
+
+      $eventAgeGroups = $loadedEvent->get('field_communico_age_group')->getValue();
+      $agesArray = [];
+      foreach ($eventAgeGroups as $value) {
+        $agesArray[] = $value['value'];
+      }
+
+      $eventTypes = $loadedEvent->get('field_communico_event_type')->getValue();
+      $evemtTypesArray = [];
+      foreach ($eventTypes as $value) {
+        $evemtTypesArray[] = $value['value'];
+      }
+
+      $var = '';
+      $expire_dt = '';
+      if ($startDate != NULL) {
+        $expireDate = new DrupalDateTime($endDate);
+        if ($this->utilityService->checkIsEventExpired($expireDate)) {
+          $this->messenger->addWarning('This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($endDate));
+          $var = 'This event is finished. The event ended on ' . $this->utilityService->formatDatestamp($endDate);
+        }
+        else {
+          if ($startDate != NULL) {
+            $var .= 'This event starts on ' . $this->utilityService->formatDatestamp($startDate);
+          }
         }
       }
-    }
 
-    $regUrl = '';
-    if (array_key_exists('eventRegistrationUrl', $event['data']) && $event['data']['eventRegistrationUrl'] != NULL) {
-      $registrationUrl = $event['data']['eventRegistrationUrl'];
-      $regUrl = Url::fromUri($registrationUrl)->toString();
-    }
+      $regUrl = '';
+      if ($loadedEvent->get('field_communico_registration_url')->uri != NULL) {
+        $regUrl = $loadedEvent->get('field_communico_registration_url')->uri;
+      }
 
-    $description = '';
-    if (array_key_exists('description', $event['data']) && $event['data']['description'] != NULL) {
-      $description .= '<p>';
-      $description .= $event['data']['shortDescription'];
-      $description .= '</p>';
-      $description .= '<p>';
-      $description .= $event['data']['description'];
-      $description .= '</p>';
-    }
+      $description = '';
+      if ($loadedEvent->get('body')->value != NULL) {
+        $description .= '<p>';
+        $description .= $loadedEvent->get('field_communico_shortdescription')->value;
+        $description .= '</p>';
+        $description .= '<p>';
+        $description .= $loadedEvent->get('body')->value;
+        $description .= '</p>';
+      }
 
-    return [
-      '#attached' => [
-        'library' => [
-          'communico_plus/communico_plus.library',
+      $returnArray = [
+        '#attached' => [
+          'library' => [
+            'communico_plus/communico_plus.library',
+          ],
         ],
-      ],
-      '#theme' => 'communico_plus_event_page',
-      '#event_data' => $event,
-      '#expire_date' => $expire_dt,
-      '#branch_link' => $branchLink,
-      '#calendar_image_path' => $calendarImagePath,
-      '#map_pin_image_path' => $map_pinImagePath,
-      '#reg_url' => $regUrl,
-      '#expired_text' => $var,
-      '#description' => $description,
-      '#one_image' => $displayImage,
-    ];
+        '#theme' => 'communico_plus_event_page',
+        '#title' => $eventTitle,
+        '#subTitle' => $eventSubTitle,
+        '#locationName' => $eventLocationName,
+        '#ages' => $agesArray,
+        '#types' => $evemtTypesArray,
+        '#expire_date' => $expire_dt,
+        '#branch_link' => $branchLink,
+        '#calendar_image_path' => $calendarImagePath,
+        '#map_pin_image_path' => $map_pinImagePath,
+        '#reg_url' => $regUrl,
+        '#expired_text' => $var,
+        '#description' => $description,
+        '#one_image' => $displayImage,
+      ];
+    }
+    return $returnArray;
   }
 
   /**

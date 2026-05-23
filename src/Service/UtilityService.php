@@ -11,6 +11,7 @@ use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\file\FileRepositoryInterface;
 
 /**
  * The UtilityService service class.
@@ -22,49 +23,56 @@ class UtilityService {
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected ConfigFactoryInterface $config;
+  protected $config;
 
   /**
    * The Messenger service.
    *
    * @var \Drupal\Core\Logger\LoggerChannelFactory
    */
-  protected LoggerChannelFactory $loggerFactory;
+  protected $loggerFactory;
 
   /**
    * The date formatter service.
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected DateFormatterInterface $dateFormatter;
+  protected $dateFormatter;
 
   /**
    * The file system service.
    *
    * @var \Drupal\Core\File\FileSystemInterface
    */
-  protected FileSystemInterface $fileSystem;
+  protected $fileSystem;
 
   /**
    * The image factory.
    *
    * @var \Drupal\Core\Image\ImageFactory
    */
-  protected ImageFactory $imageFactory;
+  protected $imageFactory;
 
   /**
    * The database connection.
    *
    * @var \Drupal\Core\Database\Connection
    */
-  protected Connection $database;
+  protected $database;
 
   /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected EntityTypeManagerInterface $entityTypeManager;
+  protected $entityTypeManager;
+
+  /**
+   * THe file repository interface.
+   *
+   * @var \Drupal\file\FileRepositoryInterface
+   */
+  protected $fileRepository;
 
   /**
    * The UtilityService constructor.
@@ -83,6 +91,8 @@ class UtilityService {
    *   The entity type manager.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
+   * @param \Drupal\file\FileRepositoryInterface $file_repository
+   *   The file repository interface.
    */
   public function __construct(
     ConfigFactoryInterface $config,
@@ -92,6 +102,7 @@ class UtilityService {
     ImageFactory $image_factory,
     EntityTypeManagerInterface $entity_manager,
     Connection $connection,
+    FileRepositoryInterface $file_repository,
   ) {
     $this->config = $config;
     $this->loggerFactory = $logger_factory;
@@ -100,6 +111,7 @@ class UtilityService {
     $this->imageFactory = $image_factory;
     $this->entityTypeManager = $entity_manager;
     $this->database = $connection;
+    $this->fileRepository = $file_repository;
   }
 
   /**
@@ -183,119 +195,33 @@ class UtilityService {
   }
 
   /**
-   * The createEventImage function.
+   * The createNodeImage function.
    *
-   * @param string $imageUrl
-   *   The URL of the image to create a render array for.
+   * @param string $urlPath
+   *   A url path.
    * @param string $eventId
-   *   The ID of the event associated with the image.
+   *   An event ID string.
    *
-   * @return array
-   *   Creates an image render array.
-   *
-   * @todo get rid of built up images periodically
+   * @return obj
+   *   Returns the image object.
    */
-  public function createEventImage($imageUrl, $eventId) {
-    $imageStyle = $this->config->get('communico_plus.settings')->get('image_styles');
-    if (!$imageStyle) {
-      $imageStyle = 'medium';
-    }
-    $image_render_array = FALSE;
+  public function createNodeImage($urlPath, $eventId) {
+    $imageFile = FALSE;
     $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath() . '/event_images';
     if (!$this->fileSystem->prepareDirectory($path)) {
       $this->fileSystem->mkdir($path);
     }
-    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
+    $ext = pathinfo($urlPath, PATHINFO_EXTENSION);
     if ($ext != NULL && $ext != '') {
-      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
-      /* check if the image already exists */
-      if (file_exists($file_path_physical)) {
-        $image = $this->imageFactory->get($file_path_physical);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-      else {
-        /* save to fs */
-        $fileOb = file_get_contents($imageUrl);
-        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, TRUE);
-        $image = $this->imageFactory->get($savedFile);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-    }
-    return $image_render_array;
-  }
+      $fileOb = file_get_contents($urlPath);
+      $imageFile = $this->fileRepository->writeData(
+        $fileOb,
+        'public://event_images/',
+        FileSystemInterface::EXISTS_REPLACE
+      );
 
-  /**
-   * The createControllerDisplayImage function.
-   *
-   * @param string $imageUrl
-   *   The URL of the image to create a render array for.
-   * @param string $eventId
-   *   The ID of the event associated with the image.
-   *
-   * @return array
-   *   Creates an image render array in Drupal for an event.
-   *
-   * @todo Get rid of built up images periodically.
-   */
-  public function createControllerDisplayImage($imageUrl, $eventId) {
-    $imageStyle = $this->config->get('communico_plus.settings')->get('page_styles');
-    if (!$imageStyle) {
-      $imageStyle = 'medium';
     }
-    $image_render_array = FALSE;
-    $path = $this->fileSystem->realpath('.') . '/' . PublicStream::basePath() . '/event_images';
-    if (!$this->fileSystem->prepareDirectory($path)) {
-      $this->fileSystem->mkdir($path);
-    }
-    $ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
-    if ($ext != NULL && $ext != '') {
-      $file_path_physical = $path . '/' . $eventId . '.' . $ext;
-      /* check if the image already exists */
-      if (file_exists($file_path_physical)) {
-        $image = $this->imageFactory->get($file_path_physical);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-      else {
-        /* save to fs */
-        $fileOb = file_get_contents($imageUrl);
-        $savedFile = $this->fileSystem->saveData($fileOb, $file_path_physical, FALSE);
-        $image = $this->imageFactory->get($savedFile);
-        if ($image->isValid()) {
-          $image_render_array = [
-            '#theme' => 'image_style',
-            '#width' => $image->getWidth(),
-            '#height' => $image->getHeight(),
-            '#style_name' => $imageStyle,
-            '#uri' => 'public://event_images/' . $eventId . '.' . $ext,
-          ];
-        }
-      }
-    }
-    return $image_render_array;
+    return $imageFile;
   }
 
   /**
@@ -308,11 +234,31 @@ class UtilityService {
    *   Returns TRUE if the event is expired, FALSE otherwise.
    */
   public function checkIsEventExpired($eventEndDate) {
-    $date = date('Y-m-d H:i:s');
+    $date = date('Y-m-d');
     $today_dt = new DrupalDateTime($date);
     $expire_dt = new DrupalDateTime($eventEndDate);
     ($expire_dt < $today_dt) ? $return = TRUE : $return = FALSE;
     return $return;
+  }
+
+  /**
+   * The getLocationNameFromId function.
+   *
+   * @param string $locationId
+   *   The ID of the location to evaluate.
+   *
+   * @return false|string
+   *   Returns the location string or FALSE.
+   *
+   * @throws \Exception
+   */
+  public function getLocationNameFromId($locationId) {
+    $locationString = $this->database->select('communico_locations', 'n')
+      ->fields('n', ['location_name'])
+      ->condition('n.location_id', $locationId, '=')
+      ->execute()
+      ->fetchField();
+    return ($locationString) ? $locationString : FALSE;
   }
 
   /**
@@ -583,7 +529,10 @@ class UtilityService {
    * @throws PluginNotFoundException
    */
   public function createEventNode($valArray) {
+
     $newEventPage = $this->entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+    $nodeImage = $this->createNodeImage($valArray['eventImage'], $valArray['eventId']);
+
     $start_date = $this->findDateFromDatestring($valArray['eventStart']);
     $end_date = $this->findDateFromDatestring($valArray['eventEnd']);
     $agesArray = [];
@@ -605,10 +554,18 @@ class UtilityService {
     $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
     $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
     $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
+    $newEventPage->set('field_communico_registration_url', ['value' => $valArray['eventRegistrationUrl']]);
+    if ($nodeImage) {
+      $ext = pathinfo($valArray['eventImage'], PATHINFO_EXTENSION);
+      $newEventPage->set('field_communico_event_image', [
+        'target_id' => $nodeImage->id(),
+        'alt' => 'A thumbnail image from the API',
+        'title' => $valArray['eventId'] . '.' . $ext,
+      ]);
+    }
     $newEventPage->enforceIsNew();
     $newEventPage->save();
     return TRUE;
-
   }
 
   /**

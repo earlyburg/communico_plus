@@ -1,4 +1,4 @@
-# core.entity_view_display.node.event_page.default.yml
+uuid: d4d7ead0-b2ad-4c2a-87bb-12506e92c56f
 langcode: en
 status: true
 dependencies:
@@ -7,19 +7,23 @@ dependencies:
     - field.field.node.event_page.field_communico_age_group
     - field.field.node.event_page.field_communico_end_date
     - field.field.node.event_page.field_communico_event_id
+    - field.field.node.event_page.field_communico_event_image
     - field.field.node.event_page.field_communico_event_type
     - field.field.node.event_page.field_communico_library_location
     - field.field.node.event_page.field_communico_location_id
+    - field.field.node.event_page.field_communico_registration_url
     - field.field.node.event_page.field_communico_shortdescription
     - field.field.node.event_page.field_communico_start_date
     - field.field.node.event_page.field_communico_subtitle
     - node.type.event_page
   module:
     - datetime
+    - image
+    - link
     - text
     - user
 _core:
-  default_config_hash: VPGnXmrDeM_Y6fznZVQJLPkU_g6ZIaCThNZ1o5cSJgI
+  default_config_hash: U3n1y8DZKkCf1H25a3XCq8dLDs2CgZm67XeaMjfEnzY
 id: node.event_page.default
 targetEntityType: node
 bundle: event_page
@@ -49,6 +53,17 @@ content:
     third_party_settings: {  }
     weight: 4
     region: content
+  field_communico_event_image:
+    type: image
+    label: above
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 9
+    region: content
   field_communico_event_type:
     type: string
     label: above
@@ -64,6 +79,18 @@ content:
       link_to_entity: false
     third_party_settings: {  }
     weight: 5
+    region: content
+  field_communico_registration_url:
+    type: link
+    label: above
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 10
     region: content
   field_communico_shortdescription:
     type: string
@@ -93,7 +120,5 @@ content:
 hidden:
   field_communico_event_id: true
   field_communico_location_id: true
-  langcode: true
   links: true
   search_api_excerpt: true
-

@@ -1,4 +1,4 @@
-# field.field.node.event_page.body.yml
+uuid: f659e502-f734-47db-8f5d-fe56d2dd6bde
 langcode: en
 status: true
 dependencies:
@@ -7,6 +7,8 @@ dependencies:
     - node.type.event_page
   module:
     - text
+_core:
+  default_config_hash: tWYXaFE8sfrULk8xiahJbDN_uwxIlssWTnKT7auMNEo
 id: node.event_page.body
 field_name: body
 entity_type: node
@@ -20,6 +22,5 @@ default_value_callback: ''
 settings:
   display_summary: true
   required_summary: false
+  allowed_formats: {  }
 field_type: text_with_summary
-
-

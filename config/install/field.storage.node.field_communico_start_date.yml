@@ -1,10 +1,12 @@
-# field.storage.node.field_communico_start_date.yml
+uuid: 6232e66b-49b7-4510-9228-3033222d3e90
 langcode: en
 status: true
 dependencies:
   module:
     - datetime
     - node
+_core:
+  default_config_hash: qv8Lg_W5ZjneRZul4XgqllaCZ8_RqmRThqJ5NRFd4VE
 id: node.field_communico_start_date
 field_name: field_communico_start_date
 entity_type: node
@@ -18,4 +20,3 @@ translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
-

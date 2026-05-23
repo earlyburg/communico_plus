@@ -78,11 +78,15 @@ function communico_plus_theme($existing, $type, $theme, $path) {
     ],
     'communico_plus_event_page' => [
       'variables' => [
-        'event_data' => [],
+        'title' => NULL,
+        'subTitle' => NULL,
         'expire_date' => NULL,
         'branch_link' => NULL,
+        'locationName' => NULL,
         'calendar_image_path' => NULL,
         'map_pin_image_path' => NULL,
+        'ages' => NULL,
+        'types' => NULL,
         'reg_url' => NULL,
         'expired_text' => NULL,
         'description' => NULL,
@@ -123,15 +127,20 @@ function communico_plus_cron() {
     ->execute();
   foreach ($eventNids as $id) {
     $node = $entityTypeManager->load($id);
-    if ($utilityService->checkIsEventExpired($node->field_communico_start_date->value)) {
+    if ($utilityService->checkIsEventExpired($node->field_communico_end_date->value)) {
       $node->setUnpublished();
       $node->save();
     }
   }
   if ($autoSave == 1) {
     $eventSyncQueue = $queueFactory->get('communico_event_sync_queue');
+    $locations = $importConfig->get('admin_library_location');
+    $queueArray = [];
+    foreach ($locations as $locationId) {
+      $queueArray[$locationId] = $utilityService->locationDropdown()[$locationId];
+    }
     // Get the libraries we are storing.
-    foreach ($utilityService->locationDropdown() as $locationId => $nameString) {
+    foreach ($queueArray as $locationId => $nameString) {
       // If we are storing nodes with this location already, create queue item.
       if ($utilityService->checkLocationExists($locationId)) {
         // Create queue item.
@@ -222,7 +231,9 @@ function communico_plus_get_agegroups_array() {
 function communico_plus_create_event_page_node($valArray) {
   $entityTypeManager = \Drupal::service('entity_type.manager');
   $utilityService = \Drupal::service('communico_plus.utilities');
+
   $newEventPage = $entityTypeManager->getStorage('node')->create(['type' => 'event_page']);
+  $nodeImage = $utilityService->createNodeImage($valArray['eventImage'], $valArray['eventId']);
   $start_date = $utilityService->findDateFromDatestring($valArray['eventStart']);
   $end_date = $utilityService->findDateFromDatestring($valArray['eventEnd']);
   $agesArray = [];
@@ -244,6 +255,15 @@ function communico_plus_create_event_page_node($valArray) {
   $newEventPage->set('field_communico_end_date', ['value' => $end_date]);
   $newEventPage->set('field_communico_library_location', ['value' => $valArray['locationName']]);
   $newEventPage->set('field_communico_location_id', ['value' => $valArray['locationId']]);
+  $newEventPage->set('field_communico_registration_url', ['value' => $valArray['eventRegistrationUrl']]);
+  if ($nodeImage) {
+    $ext = pathinfo($valArray['eventImage'], PATHINFO_EXTENSION);
+    $newEventPage->set('field_communico_event_image', [
+      'target_id' => $nodeImage->id(),
+      'alt' => 'A thumbnail image from the API',
+      'title' => $valArray['eventId'] . '.' . $ext,
+    ]);
+  }
   $newEventPage->enforceIsNew();
   $newEventPage->save();
   return TRUE;

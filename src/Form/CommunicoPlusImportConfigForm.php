@@ -27,7 +27,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
    *
    * @var \Drupal\communico_plus\Service\ConnectorService
    */
-  protected ConnectorService $connector;
+  protected $connector;
 
   /**
    * Messenger service.
@@ -41,7 +41,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected EntityTypeManagerInterface $entityTypeManager;
+  protected $entityTypeManager;
 
   /**
    * Config settings.
@@ -137,16 +137,20 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
     $form['imports']['admin_library_location'] = [
       '#type' => 'select',
       '#title' => 'Library Import Location',
+      '#multiple' => TRUE,
       '#options' => $this->utilityService->locationDropdown(),
       '#empty_option' => $this->t('Library'),
+      '#default_value' => $config->get('admin_library_location'),
       '#description' => $this->t('Select the library location to import events from, and save configuration.'),
     ];
 
     $libraryText = '<div><i>Imports events from today\'s date to the last day of the following month.</i></div>';
     $libraryText .= '<h3>The following library locations have events stored in Drupal:</h3>';
-    $currentLibraries = $this->utilityService->getStoredLibraryLocations();
-    foreach ($currentLibraries as $library) {
-      $libraryText .= '<div>' . $library . '</div>';
+
+    $currentLibraries = $config->get('admin_library_location');
+
+    foreach ($currentLibraries as $locationId) {
+      $libraryText .= '<div>' . $this->utilityService->getLocationNameFromId($locationId) . '</div>';
     }
 
     $form['imports']['admin_library_locations_status'] = [
@@ -161,8 +165,8 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
     ];
 
     $updateText = '<div><i><b>The following locations can have new events automatically imported.</b></i></div>';
-    foreach ($currentLibraries as $library) {
-      $updateText .= '<div>' . $library . '</div>';
+    foreach ($currentLibraries as $locationId) {
+      $updateText .= '<div>' . $this->utilityService->getLocationNameFromId($locationId) . '</div>';
     }
     $form['manage']['update_information'] = [
       '#markup' => $updateText,
@@ -202,14 +206,27 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $formValues = $form_state->getValues();
+    $config = $this->config(static::COMMUNICO_PLUS_IMPORT_SETTINGS);
     if (array_key_exists('admin_library_location', $formValues) && !empty($formValues['admin_library_location'])) {
-      $location = $formValues['admin_library_location'];
+      $locationsString = '';
+      $locations = $config->get('admin_library_location');
+      $lastKey = array_key_last($locations);
+      foreach ($locations as $key => $location) {
+        if ($key == $lastKey) {
+          $locationsString .= $location;
+        }
+        else {
+          $locationsString .= $location . ', ';
+        }
+      }
+
       $type = NULL;
       $age = NULL;
       $start_date = date('Y-m-d');
       $end_date = date('Y-m-d', strtotime('last day of +1 month'));
       $limit = 500;
-      $events = $this->connector->getEventsFeed($start_date, $end_date, $type, $age, $location, $limit);
+      $events = $this->connector->getEventsFeed($start_date, $end_date, $type, $age, $locationsString, $limit);
+
       $batch = [
         'title' => $this->t('Importing Events...'),
         'operations' => [],
@@ -229,6 +246,7 @@ class CommunicoPlusImportConfigForm extends ConfigFormBase {
     $this->config(static::COMMUNICO_PLUS_IMPORT_SETTINGS)
       ->set('auto_update_events', $form_state->getValue('auto_update_events'))
       ->set('delete_unpublished', $form_state->getValue('delete_unpublished'))
+      ->set('admin_library_location', $form_state->getValue('admin_library_location'))
       ->save();
     parent::submitForm($form, $form_state);
   }

@@ -1,4 +1,4 @@
-# core.entity_form_display.node.event_page.default.yml
+uuid: 20a7920f-108f-4be0-bf69-f4e4f7275ca0
 langcode: en
 status: true
 dependencies:
@@ -7,19 +7,24 @@ dependencies:
     - field.field.node.event_page.field_communico_age_group
     - field.field.node.event_page.field_communico_end_date
     - field.field.node.event_page.field_communico_event_id
+    - field.field.node.event_page.field_communico_event_image
     - field.field.node.event_page.field_communico_event_type
     - field.field.node.event_page.field_communico_library_location
     - field.field.node.event_page.field_communico_location_id
+    - field.field.node.event_page.field_communico_registration_url
     - field.field.node.event_page.field_communico_shortdescription
     - field.field.node.event_page.field_communico_start_date
     - field.field.node.event_page.field_communico_subtitle
+    - image.style.thumbnail
     - node.type.event_page
   module:
     - datetime
+    - image
+    - link
     - path
     - text
 _core:
-  default_config_hash: PZpF_IyxIehJ5wWvn0qSPTeOmUJydf-9IpN7l2f9mhY
+  default_config_hash: uEAOREF-XgC9I8HmpzOguNkSAZCcfw3j8Uoob001XUg
 id: node.event_page.default
 targetEntityType: node
 bundle: event_page
@@ -63,6 +68,14 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  field_communico_event_image:
+    type: image_image
+    weight: 27
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
   field_communico_event_type:
     type: string_textfield
     weight: 7
@@ -87,6 +100,14 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  field_communico_registration_url:
+    type: link_default
+    weight: 28
+    region: content
+    settings:
+      placeholder_url: ''
+      placeholder_title: ''
+    third_party_settings: {  }
   field_communico_shortdescription:
     type: string_textfield
     weight: 3
@@ -108,13 +129,6 @@ content:
     settings:
       size: 60
       placeholder: ''
-    third_party_settings: {  }
-  langcode:
-    type: language_select
-    weight: 11
-    region: content
-    settings:
-      include_locked: true
     third_party_settings: {  }
   path:
     type: path

@@ -1,10 +1,12 @@
-# field.field.node.event_page.field_communico_library_location.yml
+uuid: 6ae6d52d-767f-4052-a1f2-8d848d76f69f
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.node.field_communico_library_location
     - node.type.event_page
+_core:
+  default_config_hash: Q9LcNCzkOOZ_QDpCggVUqXOP5jaDkzX3fpZ2V9HOjwo
 id: node.event_page.field_communico_library_location
 field_name: field_communico_library_location
 entity_type: node

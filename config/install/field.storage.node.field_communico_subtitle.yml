@@ -1,9 +1,11 @@
-# field.storage.node.field_communico_subtitle.yml
+uuid: 3d17ba31-02fc-41d2-8df8-e25cdbc9ff09
 langcode: en
 status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: bVVP-FBioZ6od_y5rjh8d8hhdrK3ImG5MH_Bt5yFYY4
 id: node.field_communico_subtitle
 field_name: field_communico_subtitle
 entity_type: node
@@ -19,4 +21,3 @@ translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
-

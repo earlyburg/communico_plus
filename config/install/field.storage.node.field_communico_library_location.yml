@@ -1,9 +1,11 @@
-# field.storage.node.field_communico_library_location.yml
+uuid: f8440c65-92a7-4354-9518-f57a92142cc9
 langcode: en
 status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: anCJpG-MpSoZIeQ6H57ux74y3C5M3DJZdHQ-1LrYUDQ
 id: node.field_communico_library_location
 field_name: field_communico_library_location
 entity_type: node
@@ -19,5 +21,3 @@ translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
-
-

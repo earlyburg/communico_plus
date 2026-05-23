@@ -10,8 +10,10 @@
  * @ingroup themeable
  */
 #}
+{{ attach_library('communico_plus/communico_plus.library') }}
 <div class="cp-communico-block">
 {% for event in events %}
   {{ event }}
+  <div class='indica'></div>
 {% endfor %}
 </div>

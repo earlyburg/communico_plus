@@ -1,0 +1,23 @@
+uuid: 3dcc6faa-7ce3-40f3-88e6-2de550704ad5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_communico_registration_url
+    - node.type.event_page
+  module:
+    - link
+id: node.event_page.field_communico_registration_url
+field_name: field_communico_registration_url
+entity_type: node
+bundle: event_page
+label: 'Communico Registration URL'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 17
+field_type: link

@@ -13,6 +13,8 @@ use Drupal\Core\Url;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\communico_plus\Service\UtilityService;
+use Drupal\Core\Pager\PagerManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Provides a basic Communico events Block.
@@ -29,35 +31,49 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *
    * @var \Drupal\communico_plus\Service\ConnectorService
    */
-  protected ConnectorService $connectorService;
+  protected $connectorService;
 
   /**
    * Drupal config factory interface.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected ConfigFactoryInterface $configFactory;
+  protected $configFactory;
 
   /**
    * The Symfony http request stack.
    *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  private RequestStack $requestStack;
+  private $requestStack;
 
   /**
    * The date formatter service.
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected DateFormatterInterface $dateFormatter;
+  protected $dateFormatter;
 
   /**
    * The communico plus utility service.
    *
    * @var \Drupal\communico_plus\Service\UtilityService
    */
-  protected UtilityService $utilityService;
+  protected $utilityService;
+
+  /**
+   * The Drupal page manager interface.
+   *
+   * @var \Drupal\Core\Pager\PagerManagerInterface
+   */
+  protected $pagerManager;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * Constructs a Communico Plus Block.
@@ -78,6 +94,10 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *   The Drupal date formatter service.
    * @param \Drupal\communico_plus\Service\UtilityService $utility_service
    *   The Communico Plus utility service.
+   * @param \Drupal\Core\Pager\PagerManagerInterface $pager_manager
+   *   The Drupal page manager interface.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The Drupal entity type manager.
    */
   public function __construct(
     array $configuration,
@@ -88,6 +108,8 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
     RequestStack $requestStack,
     DateFormatterInterface $date_formatter,
     UtilityService $utility_service,
+    PagerManagerInterface $pager_manager,
+    EntityTypeManagerInterface $entity_type_manager,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->connectorService = $connector_service;
@@ -95,6 +117,8 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
     $this->requestStack = $requestStack;
     $this->dateFormatter = $date_formatter;
     $this->utilityService = $utility_service;
+    $this->pagerManager = $pager_manager;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -125,6 +149,8 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
       $container->get('request_stack'),
       $container->get('date.formatter'),
       $container->get('communico_plus.utilities'),
+      $container->get('pager.manager'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -151,34 +177,37 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    */
   public function blockForm($form, FormStateInterface $form_state) {
     $form = parent::blockForm($form, $form_state);
-    $config = $this->getConfiguration();
+
     $form['communico_plus_block_type'] = [
-      '#type' => 'textfield',
+      '#type' => 'select',
+      '#options' => $this->utilityService->typesDropdown(),
       '#title' => $this->t('Event Types'),
-      '#description' => $this->t('Make sure these are a valid event type in Communico. Separate multiple values with a comma'),
-      '#default_value' => $config['communico_plus_block_type'] ?? '',
+      '#description' => $this->t('Make sure these are a valid event type.'),
+      '#default_value' => $this->configuration['communico_plus_block_type'] ?? '',
+      '#empty_option' => $this->t('- Select -'),
     ];
 
     $form['communico_plus_block_start'] = [
-      '#type' => 'textfield',
+      '#type' => 'date',
       '#title' => $this->t('Start Date'),
       '#description' => $this->t('Date you would like to display events starting with in YYYY-MM-DD format, leave blank to always start at the latest days events.'),
-      '#default_value' => $config['communico_plus_block_start'] ?? '',
+      '#default_value' => $this->configuration['communico_plus_block_start'] ?? '',
     ];
 
     $form['communico_plus_block_end'] = [
-      '#type' => 'textfield',
+      '#type' => 'date',
       '#title' => $this->t('End Date'),
       '#description' => $this->t('Date you would like to display events ending with in YYYY-MM-DD format, leave blank to always view 5 days of events.'),
-      '#default_value' => $config['communico_plus_block_end'] ?? '',
+      '#default_value' => $this->configuration['communico_plus_block_end'] ?? '',
     ];
 
-    $form['communico_plus_block_limit'] = [
+    $form['communico_plus_pager_limit'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Limit'),
       '#description' => $this->t('Limit the number of results returned'),
-      '#default_value' => $config['communico_plus_block_limit'] ?? '10',
+      '#default_value' => $this->configuration['communico_plus_pager_limit'] ?? '10',
     ];
+
     return $form;
   }
 
@@ -191,10 +220,11 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *   The form state interface.
    */
   public function blockSubmit($form, FormStateInterface $form_state) {
-    $this->configuration['communico_plus_block_type'] = $form_state->getValue('communico_plus_block_type');
-    $this->configuration['communico_plus_block_start'] = $form_state->getValue('communico_plus_block_start');
-    $this->configuration['communico_plus_block_end'] = $form_state->getValue('communico_plus_block_end');
-    $this->configuration['communico_plus_block_limit'] = $form_state->getValue('communico_plus_block_limit');
+    $values = $form_state->getValues();
+    $this->configuration['communico_plus_block_type'] = $values['communico_plus_block_type'];
+    $this->configuration['communico_plus_block_start'] = $values['communico_plus_block_start'];
+    $this->configuration['communico_plus_block_end'] = $values['communico_plus_block_end'];
+    $this->configuration['communico_plus_pager_limit'] = $values['communico_plus_pager_limit'];
   }
 
   /**
@@ -207,46 +237,60 @@ class CommunicoPlusBlock extends BlockBase implements ContainerFactoryPluginInte
    *   The render array for the block content.
    */
   public function buildCommunicoPlusBlock($config) {
-    if ($config['communico_plus_block_start'] == NULL || $config['communico_plus_block_start'] == '') {
-      $config['communico_plus_block_start'] = date('Y-m-d');
-    }
-    if ($config['communico_plus_block_end'] == NULL || $config['communico_plus_block_end'] == '') {
-      $current_date = date('Y-m-d');
-      $config['communico_plus_block_end'] = date('Y-m-d', strtotime($current_date . "+7 days"));
-    }
-    $events = $this->connectorService->getFeed(
-      $config['communico_plus_block_start'],
-      $config['communico_plus_block_end'],
-      $config['communico_plus_block_type'],
-      $config['communico_plus_block_limit']);
-    $rendered_events = [];
+    $renderedEvents = [];
+    $eventStorage = $this->entityTypeManager->getStorage('node');
+    $eventQuery = $eventStorage->getQuery()
+      ->condition('type', 'event_page')
+      ->condition('field_communico_event_type', $this->utilityService->getEventTypeString($config['communico_plus_block_type']))
+      ->condition('field_communico_start_date', $config['communico_plus_block_start'], '>=')
+      ->condition('field_communico_end_date', $config['communico_plus_block_end'], '<=')
+      ->sort('field_communico_start_date', 'ASC')
+      ->accessCheck(FALSE);
+
+    $nids = $eventQuery->execute();
+    $numberOfEvents = count($nids);
+    $pager = $this->pagerManager->createPager($numberOfEvents, $config['communico_plus_pager_limit']);
+    $currentPage = $pager->getCurrentPage();
+    $offset = $currentPage * $config['communico_plus_pager_limit'];
+
+    $eventNids = $eventQuery->range($offset, $config['communico_plus_pager_limit'])->execute();
+
+    $loadedEvents = $eventStorage->loadMultiple($eventNids);
+
     $link_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
 
-    foreach ($events as $event) {
-      $branchLinkString = $this->configFactory->get('communico_plus.settings')->get('linkurl') . '/event/' . $event['eventId'] . '#branch';
-      $branchLink = '<a href="' . $branchLinkString . '" target="_new">' . $event['locationName'] . '</a>';
-      $full_link = $link_url . '/event/' . $event['eventId'];
+    foreach ($loadedEvents as $event) {
+      $branchLinkString = $this->configFactory->get('communico_plus.settings')->get('linkurl') . '/event/' . $event->get('field_communico_event_id')->value . '#branch';
+      $branchLink = '<a href="' . $branchLinkString . '" target="_new">' . $event->get('field_communico_library_location')->value . '</a>';
+      $full_link = $link_url . '/event/' . $event->get('field_communico_event_id')->value;
       $url = Url::fromUri($full_link);
-      $link = Link::fromTextAndUrl($event['title'], $url)->toString();
-      $period = $this->utilityService->checkIfOneday($event['eventStart'], $event['eventEnd']);
+      $link = Link::fromTextAndUrl($event->get('title')->value, $url)->toString();
+      $period = $this->utilityService->checkIfOneday($event->get('field_communico_start_date')->value, $event->get('field_communico_end_date')->value);
+
       if ($period) {
         $eventEnd = ' ' . $period;
       }
       else {
-        $eventEnd = $this->utilityService->formatDateStamp($event['eventEnd']);
+        $eventEnd = $this->utilityService->formatDateStamp($event->get('field_communico_end_date')->value);
       }
-      $rendered_events[] = [
-        '#theme' => 'communico_plus_item',
-        '#title_link' => $link,
-        '#start_date' => $this->utilityService->formatDateStamp($event['eventStart']),
-        '#end_date' => $eventEnd,
-        '#location' => [
-          '#markup' => $branchLink,
+      $renderedEvents[] = [
+        'content' => [
+          '#theme' => 'communico_plus_item',
+          '#title_link' => $link,
+          '#start_date' => $this->utilityService->formatDateStamp($event->get('field_communico_start_date')->value),
+          '#end_date' => $eventEnd,
+          '#location' => [
+            '#markup' => $branchLink,
+          ],
         ],
-        '#room' => $event['roomName'],
       ];
     }
-    return $rendered_events;
+    $renderedEvents[] = [
+      'pager' => [
+        '#type' => 'pager',
+      ],
+    ];
+    return $renderedEvents;
   }
 
 }

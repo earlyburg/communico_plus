@@ -1,4 +1,4 @@
-# node.type.event_page.yml
+uuid: 9dde3412-df14-479b-95ab-ac42be77be79
 langcode: en
 status: true
 dependencies:
@@ -8,11 +8,12 @@ third_party_settings:
   menu_ui:
     available_menus: {  }
     parent: ''
+_core:
+  default_config_hash: VDd36oHvPd3wMNjxjizPNQnK_TTvxo2-b5JhplhhMrY
 name: 'Event Page'
 type: event_page
 description: 'A content type for events.'
-help: ''
+help: null
 new_revision: false
 preview_mode: 1
 display_submitted: false
-

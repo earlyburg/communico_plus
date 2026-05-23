@@ -1,4 +1,4 @@
-# field.field.node.event_page.field_communico_end_date.yml
+uuid: 2451e891-e7b6-428e-9a92-e8f1cf9f2dc3
 langcode: en
 status: true
 dependencies:
@@ -7,6 +7,8 @@ dependencies:
     - node.type.event_page
   module:
     - datetime
+_core:
+  default_config_hash: '-QxX9BthxD4uwn-c5LzTh7de2t7j4Qrwjc_pg5O3SEQ'
 id: node.event_page.field_communico_end_date
 field_name: field_communico_end_date
 entity_type: node

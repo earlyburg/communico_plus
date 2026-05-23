@@ -15,7 +15,7 @@ communico_plus.import.config:
 communico_plus.event:
   path: '/event/{eventId}'
   defaults:
-    _controller: '\Drupal\communico_plus\Controller\CommunicoPlusController::event'
+    _controller: '\Drupal\communico_plus\Controller\CommunicoPlusController::getEventNode'
   requirements:
     _permission: 'access content'
 communico_plus.registration:
@@ -24,9 +24,4 @@ communico_plus.registration:
     _controller: '\Drupal\communico_plus\Controller\CommunicoPlusController::reservation'
   requirements:
     _permission: 'access content'
-communico_plus.filter_form:
-  path: '/filter_form'
-  defaults:
-    _form: '\Drupal\communico_plus\Form\CommunicoPlusFilterForm'
-  requirements:
-    _permission: 'access content'
+

@@ -1,10 +1,12 @@
-# field.field.node.event_page.field_communico_event_type.yml
+uuid: 947c85a4-ced2-4c33-b178-fef0312acbeb
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.node.field_communico_event_type
     - node.type.event_page
+_core:
+  default_config_hash: OLKkfQv9IOk7iFvMV8u40eoMp3Vs3Y75NrymwMlpmyk
 id: node.event_page.field_communico_event_type
 field_name: field_communico_event_type
 entity_type: node

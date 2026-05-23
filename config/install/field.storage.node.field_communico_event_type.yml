@@ -1,9 +1,11 @@
-# field.storage.node.field_communico_event_type.yml
+uuid: c03d4de6-ff35-4ecf-a597-78c65d50e7f0
 langcode: en
 status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: vnXU4TlE_SSlzIwaIGBwiIhC4IVqIR-CLfdG41UIO6w
 id: node.field_communico_event_type
 field_name: field_communico_event_type
 entity_type: node
@@ -19,4 +21,3 @@ translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
-

@@ -1,10 +1,12 @@
-# field.field.node.event_page.field_communico_age_group.yml
+uuid: 5722f31f-3840-4b5e-a0fd-36748ea46944
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.node.field_communico_age_group
     - node.type.event_page
+_core:
+  default_config_hash: RoX9cgmRDjmuUsB7M-DlCEXxk9wPG1uqWPhuqd16TKg
 id: node.event_page.field_communico_age_group
 field_name: field_communico_age_group
 entity_type: node

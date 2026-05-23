@@ -1,9 +1,11 @@
-# field.storage.node.field_communico_shortdescription.yml
+uuid: 6b128b5d-7a5e-4ed9-99dc-4dc2a722a373
 langcode: en
 status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: h0-j-TixVI6ERnr83nSMiTfgCZUqZd48B-yFJY58b_4
 id: node.field_communico_shortdescription
 field_name: field_communico_shortdescription
 entity_type: node
@@ -19,5 +21,3 @@ translatable: true
 indexes: {  }
 persist_with_no_fields: false
 custom_storage: false
-
-

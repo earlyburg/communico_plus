@@ -1,4 +1,4 @@
-# core.entity_view_display.node.event_page.teaser.yml
+uuid: f37c322d-aa02-4be0-a16c-f09b9ad0bbaf
 langcode: en
 status: true
 dependencies:
@@ -8,9 +8,11 @@ dependencies:
     - field.field.node.event_page.field_communico_age_group
     - field.field.node.event_page.field_communico_end_date
     - field.field.node.event_page.field_communico_event_id
+    - field.field.node.event_page.field_communico_event_image
     - field.field.node.event_page.field_communico_event_type
     - field.field.node.event_page.field_communico_library_location
     - field.field.node.event_page.field_communico_location_id
+    - field.field.node.event_page.field_communico_registration_url
     - field.field.node.event_page.field_communico_shortdescription
     - field.field.node.event_page.field_communico_start_date
     - field.field.node.event_page.field_communico_subtitle
@@ -19,7 +21,7 @@ dependencies:
     - text
     - user
 _core:
-  default_config_hash: nLGdcKShjjeWTIoln2VvQ4Rmf1eCYkuk7bz72qp66p4
+  default_config_hash: QsrIFOFGEe6fIBm2olPksHfCGeIW2uprzCsi3hrHIPw
 id: node.event_page.teaser
 targetEntityType: node
 bundle: event_page
@@ -42,12 +44,12 @@ hidden:
   field_communico_age_group: true
   field_communico_end_date: true
   field_communico_event_id: true
+  field_communico_event_image: true
   field_communico_event_type: true
   field_communico_library_location: true
   field_communico_location_id: true
+  field_communico_registration_url: true
   field_communico_shortdescription: true
   field_communico_start_date: true
   field_communico_subtitle: true
-  langcode: true
   search_api_excerpt: true
-

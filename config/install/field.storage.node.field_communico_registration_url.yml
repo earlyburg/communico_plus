@@ -1,0 +1,19 @@
+uuid: f096bcb4-948f-4b19-83ad-d1f6164d4138
+langcode: en
+status: true
+dependencies:
+  module:
+    - link
+    - node
+id: node.field_communico_registration_url
+field_name: field_communico_registration_url
+entity_type: node
+type: link
+settings: {  }
+module: link
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

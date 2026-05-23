@@ -24,7 +24,7 @@ class CommunicoPlusConfigForm extends ConfigFormBase {
    *
    * @var \Drupal\communico_plus\Service\UtilityService
    */
-  private UtilityService $utilityService;
+  private $utilityService;
 
   /**
    * CommunicoPlusConfigForm constructor.

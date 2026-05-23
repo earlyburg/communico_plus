@@ -1,9 +1,11 @@
-# field.storage.node.field_communico_age_group.yml
+uuid: b6992498-b09d-451d-bfbb-53a6372d2e98
 langcode: en
 status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: s7GSvbndsOVmg1aswSQj8sHPrQAAQ2sAiAkuO3R7vkc
 id: node.field_communico_age_group
 field_name: field_communico_age_group
 entity_type: node

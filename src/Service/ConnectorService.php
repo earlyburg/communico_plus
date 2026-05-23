@@ -21,28 +21,28 @@ class ConnectorService {
    *
    * @var \GuzzleHttp\ClientInterface
    */
-  private ClientInterface $httpClient;
+  private $httpClient;
 
   /**
    * The config factory interface.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  private ConfigFactoryInterface $config;
+  private $config;
 
   /**
    * The state store.
    *
    * @var \Drupal\Core\State\State
    */
-  private State $state;
+  private $state;
 
   /**
    * Drupal logger channel factory service.
    *
    * @var \Drupal\Core\Logger\LoggerChannelFactory
    */
-  protected LoggerChannelFactory $loggerFactory;
+  protected $loggerFactory;
 
   /**
    * The ConnectorService constructor.
@@ -392,7 +392,7 @@ class ConnectorService {
       'start' => '0',
       'startDate' => $start_date,
       'endDate' => $end_date,
-      'locationId' => $location,
+      'locationId' => [$location],
       'limit' => $limit,
       'fields' => 'eventImage,ages,types,eventRegistrationUrl',
     ];

@@ -16,5 +16,6 @@ services:
       '@file_system',
       '@image.factory',
       '@entity_type.manager',
-      '@database'
+      '@database',
+      '@file.repository'
     ]
